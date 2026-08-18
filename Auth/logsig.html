@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stud-nt - ClearQ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-left: #f4f1ea;
+      --bg-right: #ffffff;
+      --accent: #b33927;
+      --accent-hover: #962d1e;
+      --text-dark: #1a1a1a;
+      --text-muted: #666666;
+      --border-color: #e2e0d8;
+      --input-bg: #faf8f5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      display: flex;
+      min-height: 100vh;
+      background-color: var(--bg-right);
+      color: var(--text-dark);
+    }
+
+    .container {
+      display: flex;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    /* Left Hero Area */
+    .hero-section {
+      flex: 1;
+      background-color: var(--bg-left);
+      padding: 3rem 4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 6rem;
+    }
+
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      color: var(--text-dark);
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: -0.03em;
+    }
+
+    .hero-content {
+      max-width: 480px;
+    }
+
+    .hero-heading {
+      font-size: 3.4rem;
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      margin-bottom: 1.25rem;
+      color: var(--text-dark);
+    }
+
+    .hero-subtext {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    /* Right Auth Form Area */
+    .form-section {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      background-color: var(--bg-right);
+    }
+
+    .form-card {
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .form-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.4rem;
+    }
+
+    .form-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Status Messages */
+    .msg-box {
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+
+    .msg-box.error {
+      background-color: #fde8e8;
+      color: #b33927;
+      border: 1px solid #f8b4b4;
+    }
+
+    .msg-box.success {
+      background-color: #def7ec;
+      color: #03543f;
+      border: 1px solid #84e1bc;
+    }
+
+    .auth-form {
+      display: none;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .auth-form.active {
+      display: flex;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .input-group label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-dark);
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background-color: var(--input-bg);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-group input:focus {
+      border-color: var(--accent);
+      background-color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(179, 57, 39, 0.1);
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 0.9rem;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: background-color 0.2s ease;
+      margin-top: 0.5rem;
+    }
+
+    .btn-submit:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .form-footer-links {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+      font-size: 0.88rem;
+    }
+
+    .form-footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .form-footer-links a:hover {
+      color: var(--accent);
+    }
+
+    @media (max-width: 900px) {
+      .container { flex-direction: column; }
+      .hero-section { padding: 2.5rem 2rem; }
+      .brand { margin-bottom: 2.5rem; }
+      .hero-heading { font-size: 2.5rem; }
+      .form-section { padding: 2.5rem 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <div class="hero-section">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M16 12l-4-4m4 4l-4 4m4-4H8"/>
+        </svg>
+        <span class="brand-title">Stud-nt</span>
+      </div>
+
+      <div class="hero-content">
+        <h1 class="hero-heading">Skip the line.<br>Clear the noise.</h1>
+        <p class="hero-subtext">Q's moving fast. Drop your request or get left in the backlog.</p>
+      </div>
+    </div>
+
+    
+    <div class="form-section">
+      <div class="form-card">
+        
+        
+        <div id="statusMessage" class="msg-box"></div>
+
+        <!-- login -->
+        <form id="loginForm" class="auth-form active">
+          <h2 class="form-title">Welcome back</h2>
+          <p class="form-subtitle">Your account stays in this browser.</p>
+
+          <div class="input-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email"  required>
+          </div>
+
+          <div class="input-group">
+            <label for="login-pass">Password</label>
+            <input type="password" id="login-pass"  required>
+          </div>
+
+          <button type="submit" class="btn-submit">Enter the queue &gt;</button>
+
+          <div class="form-footer-links">
+            <a href="#" onclick="showForm('signupForm')">Create account</a>
+            <a href="#" onclick="showForm('resetForm')">Forgot password?</a>
+          </div>
+        </form>
+
+        <!-- signup form -->
+        <form id="signupForm" class="auth-form">
+          <h2 class="form-title">Join Stud'nt</h2>
+          <p class="form-subtitle">Skip the waiting game entirely.</p>
+
+          <div class="input-group">
+            <label for="signup-name">Full Name</label>
+            <input type="text" id="signup-name" required>
+          </div>
+
+          <div class="input-group">
+            <label for="signup-email">Email</label>
+            <input type="email" id="signup-email" required>
+          </div>
+
+          <div class="input-group">
+            <label for="signup-pass">Password</label>
+            <input type="password" id="signup-pass" placeholder="••••••••" required>
+          </div>
+
+          <button type="submit" class="btn-submit">Claim your spot &gt;</button>
+
+          <div class="form-footer-links">
+            <a href="#" onclick="showForm('loginForm')">Log in instead</a>
+          </div>
+        </form>
+
+        <!-- reset password -->
+        <form id="resetForm" class="auth-form">
+          <h2 class="form-title">Reset password</h2>
+          <p class="form-subtitle">Enter your email and your new password below.</p>
+
+          <div class="input-group">
+            <label for="reset-email">Account Email</label>
+            <input type="email" id="reset-email" placeholder="alex@company.com" required>
+          </div>
+
+          <div class="input-group">
+            <label for="reset-new-pass">New Password</label>
+            <input type="password" id="reset-new-pass" placeholder="••••••••" required>
+          </div>
+
+          <button type="submit" class="btn-submit">Update Password &gt;</button>
+
+          <div class="form-footer-links">
+            <a href="#" onclick="showForm('loginForm')">&larr; Back to login</a>
+          </div>
+        </form>
+
+<!--         
+        <div id="loggedInView" class="auth-form">
+          <h2 class="form-title" id="welcomeUser">Welcome!</h2>
+          <p class="form-subtitle">You are successfully logged in!</p>
+          <button type="button" class="btn-submit" onclick="handleLogout()">Log Out</button>
+        </div> -->
+
+      </div>
+    </div>
+  </div>
+
+  <script src="logsig.js"></script>
+
+</body>
+</html>
