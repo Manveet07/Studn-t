@@ -13,6 +13,25 @@
   --border-glass: rgba(255, 255, 255, 0.09);
   --border-glass-strong: rgba(255, 255, 255, 0.16);
 
+  /* ── Glass Panel Extended ── */
+  --glass-tint: rgba(30, 80, 140, 0.12);
+  --glass-highlight: rgba(255, 255, 255, 0.06);
+  --glass-border-shine: rgba(255, 255, 255, 0.18);
+  --glass-noise-opacity: 0.03;
+
+  /* ── Iridescent Sphere Palette ── */
+  --sphere-cyan: #00e5ff;
+  --sphere-magenta: #ff3cac;
+  --sphere-blue: #4a00e0;
+  --sphere-teal: #00d2a0;
+  --sphere-purple: #784ba0;
+  --sphere-deep-blue: #0a0e27;
+
+  /* ── Mesh Background ── */
+  --mesh-bg-1: #050a18;
+  --mesh-bg-2: #0a1628;
+  --mesh-bg-3: #0d0b2e;
+
   /* ── Text ── */
   --text-primary: #F2F3F5;
   --text-secondary: #9BA1AC;
@@ -60,6 +79,7 @@
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 24px;
+  --radius-xl: 32px;
   --radius-pill: 999px;
 
   /* ── Elevation ── */

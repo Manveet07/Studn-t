@@ -4,61 +4,65 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PriorityDesk — Get Help From People Who've Been There</title>
-  <meta name="description" content="A student peer-help platform where doubts float to the right people. Post a doubt, get matched by skill, and help others in return.">
+  <meta name="description" content="A student peer-help platform where doubts float to the right people.">
 
-  <!-- Fonts: Space Grotesk (display) + Inter (body) — self-hosted in Phase 1 -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Design tokens first, then base, then page -->
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/pages/landing.css">
 </head>
 <body class="pd-page">
 
-  <!-- Custom Cursor -->
+  <!-- Custom Cursor with Glow -->
   <div id="pd-cursor"></div>
+  <div id="pd-cursor-glow"></div>
 
-  <!-- Ambient Bubble Canvas -->
-  <canvas id="landing-bubble-canvas"></canvas>
+  <!-- Full-screen canvas: spheres + particles + stars + cursor glow -->
+  <canvas id="landing-sphere-canvas"></canvas>
 
-  <!-- Hero Section -->
-  <section class="landing-hero">
-    <div class="pd-question-mark">
-      <span class="pd-question-mark__char">?</span>
+  <!-- Nav Bar -->
+  <nav class="landing-nav">
+    <div class="landing-nav__brand">
+      <span class="landing-nav__icon">?</span>
+      <span class="landing-nav__name">PriorityDesk</span>
     </div>
+    <div class="landing-nav__links">
+      <a href="#" class="landing-nav__link">About</a>
+      <a href="#" class="landing-nav__link">How It Works</a>
+      <a href="#" class="landing-nav__link">Contact</a>
+    </div>
+    <div class="landing-nav__actions">
+      <button id="landing-login" class="landing-nav__signin">Log In</button>
+      <button id="landing-get-started-nav" class="landing-nav__cta pd-btn--magnetic">Sign Up</button>
+    </div>
+  </nav>
 
-    <h1 class="landing-tagline">
-      Help that floats to the right people.
+  <!-- Hero Content — floats directly over the canvas -->
+  <main class="landing-hero">
+    <p class="landing-eyebrow">STUDENT PEER HELP</p>
+    <h1 class="landing-hero-title">
+      Help that floats<br>to the right people.
     </h1>
-    <p class="landing-subtitle">
+    <p class="landing-hero-desc">
       Post a doubt, get matched by skill, and help others in return.
       No more shouting into the void — your question finds the one person who knows.
     </p>
 
     <div class="landing-cta-group">
-      <button id="landing-get-started" class="pd-btn pd-btn--primary pd-btn--magnetic">
-        Get Started
+      <button id="landing-get-started" class="pd-btn pd-btn--cta pd-btn--magnetic">
+        Get Started for Free &rarr;
       </button>
-      <button id="landing-login" class="pd-btn pd-btn--magnetic">
-        Log In
-      </button>
-      <button id="landing-signup" class="pd-btn pd-btn--magnetic">
-        Sign Up
+      <button class="pd-btn pd-btn--ghost pd-btn--magnetic">
+        Learn More
       </button>
     </div>
-  </section>
+  </main>
 
-  <!-- Footer -->
-  <footer class="landing-footer">
-    <p>PriorityDesk — Phase 1 Prototype</p>
-  </footer>
-
-  <!-- Page script -->
   <script type="module" src="js/pages/landing.js"></script>
-  <!-- Cursor (runs on every page) -->
   <script type="module" src="js/cursor.js"></script>
 
 </body>
