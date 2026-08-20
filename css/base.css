@@ -1,0 +1,198 @@
+/* ============================================================
+   PriorityDesk Base Styles
+   Resets, typography, layout primitives, glass-panel recipe
+   ============================================================ */
+
+/* ── Reset ── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font: var(--text-body);
+  font-family: var(--font-body), system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  outline: none;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+input, textarea, select {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+/* ── Typography Utilities ── */
+.pd-hero-text {
+  font: var(--text-hero);
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+
+.pd-h1 {
+  font: var(--text-h1);
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+
+.pd-h2 {
+  font: var(--text-h2);
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+
+.pd-h3 {
+  font: var(--text-h3);
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+
+.pd-body {
+  font: var(--text-body);
+}
+
+.pd-small {
+  font: var(--text-small);
+}
+
+.pd-text-secondary {
+  color: var(--text-secondary);
+}
+
+.pd-text-tertiary {
+  color: var(--text-tertiary);
+}
+
+/* ── Layout Primitives ── */
+.pd-page {
+  min-height: 100vh;
+  position: relative;
+}
+
+.pd-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+.pd-flex {
+  display: flex;
+}
+
+.pd-flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.pd-items-center {
+  align-items: center;
+}
+
+.pd-justify-center {
+  justify-content: center;
+}
+
+.pd-gap-1 { gap: var(--space-1); }
+.pd-gap-2 { gap: var(--space-2); }
+.pd-gap-3 { gap: var(--space-3); }
+.pd-gap-4 { gap: var(--space-4); }
+.pd-gap-5 { gap: var(--space-5); }
+
+/* ── Glass Panel Recipe ── */
+.glass-panel {
+  background: var(--surface-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-ambient);
+}
+
+/* ── Buttons ── */
+.pd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--surface-glass);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  font: var(--text-body);
+  font-weight: 500;
+  transition:
+    transform var(--dur-micro) var(--ease-standard),
+    background var(--dur-micro) var(--ease-standard),
+    box-shadow var(--dur-micro) var(--ease-standard),
+    opacity var(--dur-micro) var(--ease-standard);
+  cursor: pointer;
+  user-select: none;
+  will-change: transform;
+}
+
+.pd-btn:hover {
+  background: var(--surface-glass-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+.pd-btn:active {
+  transform: scale(0.97);
+}
+
+.pd-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Primary CTA — gets magnetic + glow on hover */
+.pd-btn--primary {
+  background: var(--surface-glass-hover);
+  border-color: var(--border-glass-strong);
+}
+
+.pd-btn--primary:hover {
+  box-shadow: var(--glow-good);
+}
+
+/* ── Accessibility: Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
