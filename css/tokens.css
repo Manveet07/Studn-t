@@ -1,58 +1,70 @@
 /* ============================================================
-   PriorityDesk Design Tokens (v1, Phase 1)
-   Source of truth: PriorityDesk_Design_System.md
-   Every color, spacing, shadow, and animation timing lives here.
+   Studn't Design Tokens
+   Blue-dominant, subtle orange accents on auth pages only.
+   Solid block buttons, professional futuristic.
    ============================================================ */
 
 :root {
   /* ── Foundation ── */
-  --bg-void: #0A0B0D;
-  --bg-raised: #101216;
-  --surface-glass: rgba(255, 255, 255, 0.04);
-  --surface-glass-hover: rgba(255, 255, 255, 0.07);
-  --border-glass: rgba(255, 255, 255, 0.09);
-  --border-glass-strong: rgba(255, 255, 255, 0.16);
+  --bg-void: #080c14;
+  --bg-raised: #0e1520;
+  --surface-glass: rgba(255, 255, 255, 0.035);
+  --surface-glass-hover: rgba(255, 255, 255, 0.06);
+  --border-glass: rgba(255, 255, 255, 0.07);
+  --border-glass-strong: rgba(255, 255, 255, 0.14);
 
   /* ── Glass Panel Extended ── */
-  --glass-tint: rgba(30, 80, 140, 0.12);
-  --glass-highlight: rgba(255, 255, 255, 0.06);
-  --glass-border-shine: rgba(255, 255, 255, 0.18);
-  --glass-noise-opacity: 0.03;
+  --glass-tint: rgba(20, 60, 120, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.04);
+  --glass-border-shine: rgba(255, 255, 255, 0.12);
+  --glass-noise-opacity: 0.02;
+
+  /* ── Blue Core Palette ── */
+  --blue-900: #0a1628;
+  --blue-800: #0f2035;
+  --blue-700: #142d48;
+  --blue-600: #1a3a5c;
+  --blue-500: #2563a0;
+  --blue-400: #3b82c4;
+  --blue-300: #60a5fa;
+  --blue-200: #93c5fd;
+
+  /* ── Accent: Orange (auth pages only) ── */
+  --accent-orange: #e8863a;
+  --accent-orange-bright: #f09c4a;
+  --accent-orange-dim: #c06a28;
 
   /* ── Iridescent Sphere Palette ── */
-  --sphere-cyan: #00e5ff;
-  --sphere-magenta: #ff3cac;
-  --sphere-blue: #4a00e0;
-  --sphere-teal: #00d2a0;
-  --sphere-purple: #784ba0;
-  --sphere-deep-blue: #0a0e27;
-
-  /* ── Mesh Background ── */
-  --mesh-bg-1: #050a18;
-  --mesh-bg-2: #0a1628;
-  --mesh-bg-3: #0d0b2e;
+  --sphere-cyan: #38bdf8;
+  --sphere-blue: #2563eb;
+  --sphere-teal: #2dd4bf;
+  --sphere-indigo: #6366f1;
+  --sphere-deep-blue: #0a1628;
 
   /* ── Text ── */
-  --text-primary: #F2F3F5;
-  --text-secondary: #9BA1AC;
-  --text-tertiary: #5C616B;
+  --text-primary: #e8ecf1;
+  --text-secondary: #8893a4;
+  --text-tertiary: #4e5a6b;
 
-  /* ── Accent Ramp — data-driven only, never decorative ── */
-  --accent-green: #3EDC84;
-  --accent-yellow: #F4C93B;
-  --accent-orange: #F5883E;
-  --accent-red: #EF5350;
+  /* ── Status Colors ── */
+  --accent-green: #34d399;
+  --accent-yellow: #fbbf24;
+  --accent-red: #f87171;
 
   /* ── Semantic Aliases ── */
   --state-good: var(--accent-green);
   --state-warn: var(--accent-yellow);
-  --state-hot: var(--accent-orange);
   --state-danger: var(--accent-red);
 
-  /* ── Glow Tokens — event/state feedback only ── */
-  --glow-good: 0 0 24px rgba(62, 220, 132, 0.35);
-  --glow-hot: 0 0 24px rgba(245, 136, 62, 0.35);
-  --glow-danger: 0 0 24px rgba(239, 83, 80, 0.35);
+  /* ── Glow Tokens ── */
+  --glow-blue: 0 0 20px rgba(37, 99, 160, 0.25);
+  --glow-good: 0 0 20px rgba(52, 211, 153, 0.25);
+  --glow-danger: 0 0 20px rgba(248, 113, 113, 0.25);
+
+  /* ── Gradients (subtle, structural only) ── */
+  --gradient-card: linear-gradient(165deg, rgba(15, 32, 53, 0.6), rgba(8, 12, 20, 0.8));
+  --gradient-sidebar: linear-gradient(180deg, rgba(10, 18, 32, 0.95), rgba(6, 10, 18, 0.98));
+  --gradient-metallic: linear-gradient(160deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 50%, rgba(255,255,255,0.04) 100%);
 
   /* ── Typography ── */
   --font-display: 'Space Grotesk', sans-serif;
@@ -74,6 +86,7 @@
   --space-6: 32px;
   --space-7: 48px;
   --space-8: 64px;
+  --space-10: 96px;
 
   /* ── Radius ── */
   --radius-sm: 8px;
@@ -83,8 +96,9 @@
   --radius-pill: 999px;
 
   /* ── Elevation ── */
-  --shadow-ambient: 0 12px 40px rgba(0, 0, 0, 0.45);
-  --shadow-lift: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-ambient: 0 12px 40px rgba(0, 0, 0, 0.5);
+  --shadow-lift: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-neon: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 40px rgba(37, 99, 160, 0.05);
 
   /* ── Motion ── */
   --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);

@@ -60,8 +60,8 @@ function initCursorHover() {
       if (cursor) {
         cursor.style.width = '32px';
         cursor.style.height = '32px';
-        cursor.style.background = 'rgba(0, 229, 255, 0.7)';
-        cursor.style.boxShadow = '0 0 16px rgba(0, 229, 255, 0.5)';
+        cursor.style.background = 'rgba(56, 189, 248, 0.7)';
+        cursor.style.boxShadow = '0 0 16px rgba(56, 189, 248, 0.4)';
       }
     });
     el.addEventListener('mouseleave', () => {

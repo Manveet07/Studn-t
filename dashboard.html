@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Studn't</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/pages/dashboard-v3.css">
+</head>
+<body class="pd-page">
+
+  <div id="pd-cursor"></div>
+  <div id="pd-cursor-glow"></div>
+
+  <!-- Background with subtle cyan glow -->
+  <div class="dash-bg"></div>
+
+  <div class="app-shell">
+
+    <!-- ═══ LEFT SIDEBAR ═══ -->
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar__brand">
+        <span class="glow-mark__text">?</span>
+      </a>
+      <nav class="sidebar__nav">
+        <a class="sidebar__link sidebar__link--active" href="dashboard.html" title="Dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </a>
+        <a class="sidebar__link" href="profile.html" title="Profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </a>
+      </nav>
+      <div class="sidebar__spacer"></div>
+      <div class="sidebar__avatar" id="sidebar-avatar" title="Profile">
+        <span id="sidebar-avatar-letter">?</span>
+      </div>
+      <button class="sidebar__logout" id="sidebar-logout" title="Log out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </aside>
+
+    <!-- ═══ MIDDLE: MY DOUBTS ═══ -->
+    <section class="panel panel--doubts">
+      <div class="panel__header">
+        <div>
+          <h2 class="panel__title">My Doubts</h2>
+          <p class="panel__subtitle">Manage and track your questions</p>
+        </div>
+      </div>
+
+      <div class="panel__tabs">
+        <button class="panel__tab panel__tab--active" data-tab="active">Active</button>
+        <button class="panel__tab" data-tab="solved">Past</button>
+      </div>
+
+      <div class="doubt-list" id="my-doubts-list"></div>
+
+      <div class="panel__empty" id="my-doubts-empty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div class="panel__empty-text">No doubts yet.<br>Post one to get started!</div>
+      </div>
+    </section>
+
+    <!-- ═══ RIGHT: DOUBT POOL ═══ -->
+    <section class="panel panel--pool">
+      <div class="panel__header">
+        <div>
+          <h2 class="panel__title">Doubt Pool</h2>
+          <p class="panel__subtitle">Help fellow students and earn reputation points</p>
+        </div>
+      </div>
+
+      <div class="pool-toolbar">
+        <div class="pool-tabs-inline">
+          <button class="pool-tab pool-tab--active" data-pool="all">All Doubts</button>
+          <button class="pool-tab" data-pool="eligible">My Eligibility</button>
+          <button class="pool-tab" data-pool="campus">Same Campus</button>
+        </div>
+      </div>
+
+      <div class="pool-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="pool-search__input" id="pool-search-input" placeholder="Search doubts by subject, topic keyword, or student name...">
+        <button class="pool-search__filters">Filters</button>
+      </div>
+
+      <!-- Bubble Pool Canvas -->
+      <div class="pool-canvas-wrap" id="pool-canvas-wrap">
+        <canvas id="bubble-pool-canvas"></canvas>
+        <div class="pool-empty-overlay" id="pool-empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div class="panel__empty-text">No doubts in the pool yet.</div>
+        </div>
+      </div>
+
+      <!-- Floating post button -->
+      <button class="fab-post" id="btn-post-doubt">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </section>
+
+  </div>
+
+  <!-- Doubt Creation Modal -->
+  <div class="modal-overlay" id="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal__header">
+        <div class="modal__title">Post a Doubt</div>
+        <button class="modal__close" id="modal-close">×</button>
+      </div>
+      <div class="modal__category-tabs">
+        <button class="modal__category-tab modal__category-tab--active" data-category="academic">Academic</button>
+        <button class="modal__category-tab" data-category="nonacademic">Non-Academic</button>
+      </div>
+      <div class="modal__errors" id="modal-errors"></div>
+      <div class="modal__form" id="modal-form">
+        <div class="modal__field">
+          <label class="modal__label">Tags (select one or more)</label>
+          <div class="modal__tags" id="modal-tags"></div>
+        </div>
+        <div class="modal__field">
+          <label class="modal__label" for="modal-course">Course / Context (optional)</label>
+          <input class="modal__input" type="text" id="modal-course" placeholder="e.g. CS201, Prof. Sharma">
+        </div>
+        <div class="modal__field">
+          <label class="modal__label" for="modal-description">Description</label>
+          <textarea class="modal__textarea" id="modal-description" placeholder="Describe your doubt in detail..." rows="3"></textarea>
+        </div>
+        <div class="modal__field">
+          <label class="modal__label">Urgency</label>
+          <div class="modal__urgency">
+            <input class="modal__urgency-slider" type="range" id="modal-urgency" min="0" max="100" value="50">
+            <div class="modal__urgency-value" id="modal-urgency-value">50</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal__footer">
+        <button class="modal__btn modal__btn--cancel" id="modal-cancel">Cancel</button>
+        <button class="modal__btn modal__btn--submit" id="modal-submit">Post Doubt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Panel -->
+  <div class="detail-panel" id="bubble-detail" style="display:none">
+    <div class="detail-panel__inner">
+      <button class="detail-panel__close" id="detail-close">×</button>
+      <div class="detail-panel__category" id="detail-category"></div>
+      <div class="detail-panel__title" id="detail-title"></div>
+      <div class="detail-panel__meta">
+        <div class="detail-panel__meta-item">Urgency: <span id="detail-urgency"></span></div>
+        <div class="detail-panel__meta-item">Posted: <span id="detail-time"></span></div>
+      </div>
+      <div class="detail-panel__tags" id="detail-tags"></div>
+      <div class="detail-panel__actions" id="detail-actions">
+        <button class="detail-panel__btn detail-panel__btn--claim" id="detail-claim">Claim Doubt</button>
+        <button class="detail-panel__btn detail-panel__btn--dismiss" id="detail-dismiss">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/pages/dashboard.js"></script>
+  <script type="module" src="js/cursor.js"></script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — Studn't</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/pages/auth-shared.css">
+  <link rel="stylesheet" href="css/pages/loading.css">
+</head>
+<body class="pd-page auth-page">
+
+  <div id="pd-cursor"></div>
+  <div id="pd-cursor-glow"></div>
+
+  <canvas id="auth-bg-canvas"></canvas>
+
+  <main class="auth-container">
+    <div class="auth-glass-card">
+
+      <div class="auth-header">
+        <a class="auth-back-btn" id="auth-back" href="index.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back
+        </a>
+        <a href="index.html" class="glow-mark" style="margin: 0 auto var(--space-4) auto;">
+          <span class="glow-mark__text">?</span>
+        </a>
+        <p class="auth-eyebrow">CREATE ACCOUNT</p>
+        <h1 class="auth-title">Let's get you set up</h1>
+      </div>
+
+      <!-- Step Counter -->
+      <div class="auth-step-counter" id="signup-step-counter">Step 1 of 6 — Basic Info</div>
+
+      <!-- Progress -->
+      <div class="auth-progress">
+        <div class="auth-progress__step auth-progress__step--active" data-step="1"></div>
+        <div class="auth-progress__step" data-step="2"></div>
+        <div class="auth-progress__step" data-step="3"></div>
+        <div class="auth-progress__step" data-step="4"></div>
+        <div class="auth-progress__step" data-step="5"></div>
+        <div class="auth-progress__step" data-step="6"></div>
+      </div>
+
+      <div class="pd-errors" id="signup-errors"></div>
+
+      <div class="auth-steps" id="auth-steps">
+
+        <!-- Step 1: Basic Info -->
+        <div class="auth-step auth-step--active" data-step="1">
+          <div class="pd-field">
+            <label class="pd-field__label" for="su-name">Full Name</label>
+            <input class="pd-field__input" type="text" id="su-name" placeholder="e.g. Aisha Patel" autocomplete="name">
+          </div>
+          <div class="pd-field">
+            <label class="pd-field__label" for="su-username">Pick a Username</label>
+            <input class="pd-field__input" type="text" id="su-username" placeholder="e.g. aisha_23" autocomplete="username">
+          </div>
+          <div class="pd-field">
+            <label class="pd-field__label" for="su-email">Email Address</label>
+            <input class="pd-field__input" type="email" id="su-email" placeholder="e.g. aisha@university.edu" autocomplete="email">
+          </div>
+        </div>
+
+        <!-- Step 2: Password -->
+        <div class="auth-step" data-step="2">
+          <div class="pd-field pd-field--password">
+            <label class="pd-field__label" for="su-password">Create Password</label>
+            <input class="pd-field__input" type="password" id="su-password" placeholder="Min. 6 characters" autocomplete="new-password">
+            <button type="button" class="pd-field__password-toggle" id="su-pw-toggle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="pd-field pd-field--password">
+            <label class="pd-field__label" for="su-confirm-password">Confirm Password</label>
+            <input class="pd-field__input" type="password" id="su-confirm-password" placeholder="Re-enter your password" autocomplete="new-password">
+            <button type="button" class="pd-field__password-toggle" id="su-cpw-toggle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: University & Year -->
+        <div class="auth-step" data-step="3">
+          <div class="pd-field">
+            <label class="pd-field__label" for="su-university">University / College</label>
+            <input class="pd-field__input" type="text" id="su-university" placeholder="e.g. IIT Bombay" autocomplete="organization">
+          </div>
+          <div class="pd-field">
+            <label class="pd-field__label" for="su-campus">Campus / Location</label>
+            <input class="pd-field__input" type="text" id="su-campus" placeholder="e.g. Main Campus, Powai">
+          </div>
+          <div class="pd-field">
+            <label class="pd-field__label">Year of Study</label>
+            <div class="pd-year-group" id="su-year-group">
+              <button class="pd-year-pill" data-year="1st">1st Year</button>
+              <button class="pd-year-pill" data-year="2nd">2nd Year</button>
+              <button class="pd-year-pill" data-year="3rd">3rd Year</button>
+              <button class="pd-year-pill" data-year="4th">4th Year</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Branch & About -->
+        <div class="auth-step" data-step="4">
+          <div class="pd-field">
+            <label class="pd-field__label" for="su-branch">Branch / Major</label>
+            <input class="pd-field__input" type="text" id="su-branch" placeholder="e.g. Computer Science">
+          </div>
+          <div class="pd-field">
+            <label class="pd-field__label" for="su-bio">Short Bio (optional)</label>
+            <input class="pd-field__input" type="text" id="su-bio" placeholder="e.g. I love debugging at 3am">
+          </div>
+        </div>
+
+        <!-- Step 5: Academic Skills -->
+        <div class="auth-step" data-step="5">
+          <div class="pd-field">
+            <label class="pd-field__label">What are you good at? (Select all that apply)</label>
+            <div class="pd-checkbox-grid" id="su-academic-skills"></div>
+          </div>
+        </div>
+
+        <!-- Step 6: Non-Academic Opt-in -->
+        <div class="auth-step" data-step="6">
+          <div class="pd-field">
+            <label class="pd-field__label">Also willing to help with non-academic questions?</label>
+            <div class="pd-optin" id="su-optin">
+              <div class="pd-optin__text">
+                <strong>Non-academic help</strong><br>
+                Exam logistics, fees, travel, hostel life, placements...
+              </div>
+              <div class="pd-toggle" id="su-toggle"></div>
+            </div>
+          </div>
+          <div class="pd-field" id="su-nonacademic-section" style="display:none">
+            <label class="pd-field__label">Which areas?</label>
+            <div class="pd-checkbox-grid" id="su-nonacademic-skills"></div>
+          </div>
+        </div>
+
+        <!-- Success State -->
+        <div class="auth-step" data-step="success">
+          <div class="auth-success">
+            <div class="auth-success__icon">✓</div>
+            <h2 class="auth-success__title">You're in!</h2>
+            <p class="auth-success__sub">
+              Welcome to Studn't. Your account is ready.<br>
+              Time to float some doubts.
+            </p>
+            <button class="pd-btn pd-btn--cta pd-btn--magnetic" id="su-go-dashboard">
+              Go to Dashboard →
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Nav Buttons -->
+      <div class="auth-nav" id="signup-nav">
+        <button class="pd-btn pd-btn--ghost" id="su-prev" style="visibility: hidden; padding: 12px 24px; font-size: 0.9rem;">← Back</button>
+        <button class="pd-btn pd-btn--cta" id="su-next">Next →</button>
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module" src="js/pages/signup.js"></script>
+  <script type="module" src="js/cursor.js"></script>
+</body>
+</html>
