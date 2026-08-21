@@ -14,6 +14,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -23,6 +24,7 @@ body {
   font-family: var(--font-body), system-ui, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 a {
@@ -224,6 +226,11 @@ input, textarea, select {
   50%      { color: rgba(100, 210, 255, 1); text-shadow: 0 0 16px rgba(56, 189, 248, 0.7); }
 }
 
+/* ── Transition Links ── */
+a[data-transition] {
+  cursor: pointer;
+}
+
 /* ── Back Arrow Button ── */
 .auth-back-btn {
   display: inline-flex;
@@ -251,6 +258,84 @@ input, textarea, select {
 .auth-back-btn svg {
   width: 14px;
   height: 14px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE TRANSITIONS
+   Bubble-expand effect when navigating between pages
+   ═══════════════════════════════════════════════════════════════ */
+
+.page-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none;
+  background: transparent;
+}
+
+.page-transition--active {
+  pointer-events: all;
+}
+
+.page-transition--enter {
+  background: #0a1019;
+}
+
+.page-transition__circle {
+  position: absolute;
+  border-radius: 50%;
+  background: #0a1019;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-transition__circle--expand {
+  width: 300vmax !important;
+  height: 300vmax !important;
+}
+
+.page-transition__circle--shrink {
+  width: 0px !important;
+  height: 0px !important;
+}
+
+/* ── Custom Cursor (all pages) ── */
+#pd-cursor {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate(-50%, -50%);
+  will-change: transform, width, height;
+  transition: width 0.15s ease-out, height 0.15s ease-out, background 0.15s ease-out;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+}
+
+#pd-cursor-glow {
+  position: fixed;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(37, 99, 160, 0.06) 0%,
+    rgba(37, 99, 160, 0.02) 30%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 99998;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+  transition: opacity 0.4s;
+  opacity: 0;
+  clip-path: inset(0);
+}
+
+body.pd-cursor-active #pd-cursor-glow {
+  opacity: 1;
 }
 
 /* ── Accessibility: Reduced Motion ── */

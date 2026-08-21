@@ -20,12 +20,9 @@ export function showLoadingScreen(userName, redirectUrl, duration = 2500) {
   const canvas = overlay.querySelector('.pd-loading-canvas');
   initShootingStars(canvas);
 
-  // Redirect after duration
+  // Redirect after duration — no fade-out, just hard redirect to prevent flash
   setTimeout(() => {
-    overlay.classList.add('pd-loading-overlay--exit');
-    setTimeout(() => {
-      window.location.href = redirectUrl;
-    }, 500);
+    window.location.href = redirectUrl;
   }, duration);
 }
 

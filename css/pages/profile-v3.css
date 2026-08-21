@@ -506,3 +506,140 @@
   color: var(--text-primary);
   text-align: right;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  .profile-shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    height: 56px;
+    flex-direction: row;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0 var(--space-3);
+    justify-content: space-between;
+  }
+
+  .sidebar__brand {
+    margin-bottom: 0;
+  }
+
+  .sidebar__nav {
+    flex-direction: row;
+    gap: var(--space-2);
+  }
+
+  .sidebar__spacer {
+    display: none;
+  }
+
+  .sidebar__logout {
+    width: 32px;
+    height: 32px;
+  }
+
+  .profile-main {
+    height: calc(100vh - 56px);
+    padding: var(--space-3);
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto auto;
+  }
+
+  .pcard--photo {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .pcard--days {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .pcard--rep {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .pcard--asked {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .pcard--skills {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .pcard--repbar {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+
+  .pcard--engagement {
+    grid-column: 1 / -1;
+    grid-row: 5;
+  }
+
+  .pcard--details {
+    grid-column: 1 / -1;
+    grid-row: 6;
+  }
+
+  .pcard__photo-area {
+    min-height: 200px;
+    max-height: 280px;
+  }
+
+  .pcard__detail-rows {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pcard--photo,
+  .pcard--days,
+  .pcard--rep,
+  .pcard--asked,
+  .pcard--skills,
+  .pcard--repbar,
+  .pcard--engagement,
+  .pcard--details {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .profile-main {
+    padding: var(--space-3) var(--space-2);
+  }
+
+  .profile-header__title {
+    font-size: 1rem;
+  }
+
+  .pcard__photo-area {
+    min-height: 180px;
+    max-height: 220px;
+  }
+
+  .pcard__detail-rows {
+    grid-template-columns: 1fr;
+  }
+
+  .pcard__big {
+    font-size: 1.6rem;
+  }
+}
