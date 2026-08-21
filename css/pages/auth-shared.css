@@ -44,6 +44,8 @@
     0 20px 60px rgba(0, 0, 0, 0.4),
     0 0 40px rgba(37, 99, 160, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: none;
+  transform: none;
 }
 
 /* ── Header Section ── */
@@ -208,11 +210,13 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
+  transform: none;
 }
 
 .auth-user-card:hover {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.12);
+  transform: none;
 }
 
 .auth-user-card__avatar {

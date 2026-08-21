@@ -7,7 +7,7 @@
    ============================================================ */
 
 import * as store from '../store.js';
-import { createDoubt, validateDoubt } from '../models.js';
+import { createDoubt, validateDoubt, createNotification, applyRepChange } from '../models.js';
 import { ACADEMIC_SKILLS, NONACADEMIC_CATEGORIES } from '../categories.js';
 import { matchScore } from '../algorithms/matchScore.js';
 import { priorityScore } from '../algorithms/priorityScore.js';
@@ -26,7 +26,6 @@ const myDoubtsEmpty = document.getElementById('my-doubts-empty');
 const myDoubtsTabs = document.querySelectorAll('.panel__tab[data-tab]');
 
 // Pool panel
-const poolList = document.getElementById('pool-list');
 const poolEmpty = document.getElementById('pool-empty');
 const poolTabs = document.querySelectorAll('.pool-tab[data-pool]');
 
@@ -285,47 +284,13 @@ function renderPool() {
     });
   }
 
-  // Sort by match score
-  const scored = poolDoubts.map((d) => {
-    const match = matchScore(currentUser, d);
-    return { doubt: d, match };
-  }).sort((a, b) => b.match - a.match);
+  // Update bubbles with filtered doubts
+  updateBubbles(poolDoubts, currentUser, matchScore);
 
-  if (scored.length === 0) {
-    poolList.innerHTML = '';
-    poolEmpty.style.display = '';
-    return;
+  // Toggle empty state
+  if (poolEmpty) {
+    poolEmpty.style.display = poolDoubts.length === 0 ? '' : 'none';
   }
-
-  poolEmpty.style.display = 'none';
-  // Track previous IDs for pop animation
-  const prevIds = new Set();
-  poolList.querySelectorAll('.pool-item').forEach((el) => prevIds.add(el.dataset.doubtId));
-
-  poolList.innerHTML = scored.map((item) => {
-    const { doubt, match } = item;
-    const timeAgo = getTimeAgo(doubt.createdAt);
-    const matchPercent = Math.round(match * 100);
-    const firstTag = (doubt.tags && doubt.tags[0]) ? doubt.tags[0] : (doubt.category === 'academic' ? 'ACADEMIC' : 'OTHER');
-
-    return `
-      <div class="pool-item" data-doubt-id="${doubt.id}">
-        <div class="pool-item__top">
-          <span class="pool-item__match">${matchPercent}%</span>
-          <span class="pool-item__title">${escapeHtml(doubt.description)}</span>
-        </div>
-        <div class="pool-item__bottom">
-          <span class="pool-item__tag">${escapeHtml(firstTag.toUpperCase())}</span>
-          <span class="pool-item__time">${timeAgo}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  // Wire click handlers
-  poolList.querySelectorAll('.pool-item').forEach((el) => {
-    el.addEventListener('click', () => showDoubtDetail(el.dataset.doubtId));
-  });
 }
 
 function initPoolTabs() {
@@ -348,7 +313,10 @@ function showDoubtDetail(doubtId) {
   if (!doubt) return;
   detailPanel.dataset.currentDoubtId = doubtId;
 
-  detailCategory.textContent = doubt.category === 'academic' ? 'Academic' : 'Non-Academic';
+  const author = store.getUserById(doubt.authorId);
+  const claimer = doubt.claimedBy ? store.getUserById(doubt.claimedBy) : null;
+
+  detailCategory.textContent = doubt.category === 'academic' ? 'ACADEMIC' : 'NON-ACADEMIC';
   detailTitle.textContent = doubt.description;
   detailUrgency.textContent = `${doubt.urgency}%`;
   detailTime.textContent = getTimeAgo(doubt.createdAt);
@@ -357,19 +325,137 @@ function showDoubtDetail(doubtId) {
     .map((t) => `<span class="detail-panel__tag">${escapeHtml(t)}</span>`)
     .join('');
 
+  // Build detail body
   const isAuthor = doubt.authorId === currentUser.id;
-  const isClaimed = doubt.claimedBy === currentUser.id;
+  const isClaimer = doubt.claimedBy === currentUser.id;
   const canClaim = doubt.status === 'open' && !isAuthor;
+  const canResolve = doubt.status === 'claimed' && isClaimer;
+  const canRate = doubt.status === 'resolved' && isAuthor && !doubt.ratingGiven;
 
-  detailClaim.style.display = canClaim ? 'block' : 'none';
-  detailClaim.textContent = isClaimed ? 'You claimed this' : 'Claim Doubt';
+  // Author info
+  let authorHtml = '';
+  if (author) {
+    authorHtml = `
+      <div class="detail-panel__person">
+        <div class="detail-panel__person-avatar">${author.name.charAt(0).toUpperCase()}</div>
+        <div class="detail-panel__person-info">
+          <div class="detail-panel__person-name">${escapeHtml(author.name)}</div>
+          <div class="detail-panel__person-sub">@${escapeHtml(author.username)} · ${author.branch || ''}</div>
+        </div>
+      </div>
+    `;
+  }
 
-  if (isClaimed) {
-    detailClaim.disabled = true;
-    detailClaim.style.opacity = '0.5';
-  } else {
-    detailClaim.disabled = false;
-    detailClaim.style.opacity = '1';
+  // Claimer info
+  let claimerHtml = '';
+  if (claimer && (doubt.status === 'claimed' || doubt.status === 'resolved')) {
+    claimerHtml = `
+      <div class="detail-panel__person">
+        <div class="detail-panel__person-avatar detail-panel__person-avatar--helper">${claimer.name.charAt(0).toUpperCase()}</div>
+        <div class="detail-panel__person-info">
+          <div class="detail-panel__person-name">${escapeHtml(claimer.name)}</div>
+          <div class="detail-panel__person-sub">@${escapeHtml(claimer.username)} · ${claimer.branch || ''}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Status badge
+  let statusBadge = '';
+  if (doubt.status === 'open') {
+    statusBadge = '<span class="detail-panel__badge detail-panel__badge--open">OPEN</span>';
+  } else if (doubt.status === 'claimed') {
+    statusBadge = '<span class="detail-panel__badge detail-panel__badge--claimed">CLAIMED</span>';
+  } else if (doubt.status === 'resolved') {
+    statusBadge = '<span class="detail-panel__badge detail-panel__badge--resolved">RESOLVED</span>';
+  }
+
+  // Rating display
+  let ratingHtml = '';
+  if (doubt.status === 'resolved' && doubt.ratingGiven) {
+    const stars = Array.from({ length: 5 }, (_, i) =>
+      i < doubt.ratingGiven ? '★' : '☆'
+    ).join('');
+    ratingHtml = `<div class="detail-panel__rating-display">Rating: <span class="detail-panel__stars">${stars}</span></div>`;
+  }
+
+  // Rating form (for author after resolve)
+  let ratingFormHtml = '';
+  if (canRate) {
+    ratingFormHtml = `
+      <div class="detail-panel__rating-form" id="rating-form">
+        <div class="detail-panel__rating-label">Rate this helper:</div>
+        <div class="detail-panel__rating-stars" id="rating-stars">
+          <button class="rating-star" data-rating="1">★</button>
+          <button class="rating-star" data-rating="2">★</button>
+          <button class="rating-star" data-rating="3">★</button>
+          <button class="rating-star" data-rating="4">★</button>
+          <button class="rating-star" data-rating="5">★</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Actions
+  let actionsHtml = '';
+  if (canClaim) {
+    actionsHtml = `<button class="detail-panel__btn detail-panel__btn--claim" id="detail-claim">Claim Doubt</button>`;
+  } else if (canResolve) {
+    actionsHtml = `<button class="detail-panel__btn detail-panel__btn--resolve" id="detail-resolve">Mark as Resolved</button>`;
+  }
+  actionsHtml += `<button class="detail-panel__btn detail-panel__btn--dismiss" id="detail-dismiss">Close</button>`;
+
+  // Assemble detail body
+  const bodyEl = detailPanel.querySelector('.detail-panel__inner');
+  const existingBody = bodyEl.querySelector('.detail-panel__body');
+  if (existingBody) existingBody.remove();
+
+  const body = document.createElement('div');
+  body.className = 'detail-panel__body';
+  body.innerHTML = `
+    <div class="detail-panel__section">
+      <div class="detail-panel__section-label">STATUS</div>
+      ${statusBadge}
+    </div>
+    <div class="detail-panel__section">
+      <div class="detail-panel__section-label">POSTED BY</div>
+      ${authorHtml}
+    </div>
+    ${claimerHtml ? `<div class="detail-panel__section"><div class="detail-panel__section-label">CLAIMED BY</div>${claimerHtml}</div>` : ''}
+    ${ratingHtml ? `<div class="detail-panel__section">${ratingHtml}</div>` : ''}
+    ${ratingFormHtml ? `<div class="detail-panel__section">${ratingFormHtml}</div>` : ''}
+    <div class="detail-panel__actions">
+      ${actionsHtml}
+    </div>
+  `;
+
+  // Insert before existing actions div
+  const existingActions = bodyEl.querySelector('.detail-panel__actions');
+  if (existingActions) existingActions.remove();
+  bodyEl.appendChild(body);
+
+  // Wire new action buttons
+  const newClaimBtn = body.querySelector('#detail-claim');
+  const newResolveBtn = body.querySelector('#detail-resolve');
+  const newDismissBtn = body.querySelector('#detail-dismiss');
+  const ratingStars = body.querySelector('#rating-stars');
+
+  if (newClaimBtn) {
+    newClaimBtn.addEventListener('click', () => handleClaim(doubtId));
+  }
+  if (newResolveBtn) {
+    newResolveBtn.addEventListener('click', () => handleResolve(doubtId));
+  }
+  if (newDismissBtn) {
+    newDismissBtn.addEventListener('click', hideDoubtDetail);
+  }
+  if (ratingStars) {
+    ratingStars.querySelectorAll('.rating-star').forEach((star) => {
+      star.addEventListener('click', () => {
+        const rating = parseInt(star.dataset.rating, 10);
+        handleRate(doubtId, rating);
+      });
+    });
   }
 
   detailPanel.style.display = 'block';
@@ -379,26 +465,97 @@ function hideDoubtDetail() {
   detailPanel.style.display = 'none';
 }
 
-function initDetailPanel() {
-  detailClose.addEventListener('click', hideDoubtDetail);
-
-  detailClaim.addEventListener('click', () => {
-    const doubtId = detailPanel.dataset.currentDoubtId;
-    if (!doubtId) return;
-
-    store.updateDoubt(doubtId, {
-      status: 'claimed',
-      claimedBy: currentUser.id,
-      claimedAt: Date.now(),
-    });
-
-    hideDoubtDetail();
-    renderMyDoubts();
-    renderPool();
-    refreshBubbles();
+function handleClaim(doubtId) {
+  store.updateDoubt(doubtId, {
+    status: 'claimed',
+    claimedBy: currentUser.id,
+    claimedAt: Date.now(),
   });
 
-  detailDismiss.addEventListener('click', hideDoubtDetail);
+  // Award rep for claiming
+  applyRepChange(currentUser.id, 'claim');
+
+  // Notify the author
+  const doubt = store.getDoubtById(doubtId);
+  if (doubt) {
+    const notif = createNotification({
+      type: 'claim',
+      fromUserId: currentUser.id,
+      doubtId,
+      message: `${currentUser.name} claimed your doubt: "${doubt.description.slice(0, 40)}..."`,
+    });
+    store.addNotification(doubt.authorId, notif);
+  }
+
+  hideDoubtDetail();
+  renderMyDoubts();
+  renderPool();
+  refreshBubbles();
+  updateNotifBadge();
+}
+
+function handleResolve(doubtId) {
+  store.updateDoubt(doubtId, {
+    status: 'resolved',
+    resolvedAt: Date.now(),
+  });
+
+  // Award rep for resolving
+  applyRepChange(currentUser.id, 'resolve');
+
+  // Notify the author
+  const doubt = store.getDoubtById(doubtId);
+  if (doubt) {
+    const notif = createNotification({
+      type: 'resolve',
+      fromUserId: currentUser.id,
+      doubtId,
+      message: `${currentUser.name} resolved your doubt: "${doubt.description.slice(0, 40)}..."`,
+    });
+    store.addNotification(doubt.authorId, notif);
+  }
+
+  hideDoubtDetail();
+  renderMyDoubts();
+  renderPool();
+  refreshBubbles();
+  updateNotifBadge();
+}
+
+function handleRate(doubtId, rating) {
+  const doubt = store.getDoubtById(doubtId);
+  if (!doubt || !doubt.claimedBy) return;
+
+  store.updateDoubt(doubtId, {
+    ratingGiven: rating,
+    ratingTimestamp: Date.now(),
+  });
+
+  // Award rep to helper based on rating
+  applyRepChange(doubt.claimedBy, `rate_${rating}`);
+
+  // Add rating to helper's history
+  const helper = store.getUserById(doubt.claimedBy);
+  if (helper) {
+    const history = helper.ratingHistory || [];
+    history.push({ doubtId, rating, timestamp: Date.now() });
+    store.updateUser(doubt.claimedBy, { ratingHistory: history });
+  }
+
+  // Notify the helper
+  const notif = createNotification({
+    type: 'rate',
+    fromUserId: currentUser.id,
+    doubtId,
+    message: `${currentUser.name} gave you ${rating}★ for helping with: "${doubt.description.slice(0, 40)}..."`,
+  });
+  store.addNotification(doubt.claimedBy, notif);
+
+  hideDoubtDetail();
+  renderMyDoubts();
+  renderPool();
+  refreshBubbles();
+  updateNotifBadge();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -571,29 +728,131 @@ function initBubblePoolCanvas() {
 }
 
 function refreshBubbles() {
-  const doubts = store.getDoubts();
-  updateBubbles(doubts, currentUser, matchScore);
-
-  const activeCount = doubts.filter((d) => d.status === 'open' || d.status === 'claimed').length;
-  const emptyEl = document.getElementById('pool-empty');
-  if (emptyEl) {
-    emptyEl.style.display = activeCount > 0 ? 'none' : '';
-  }
+  renderPool();
 }
 
 function initPoolSearch() {
   const searchInput = document.getElementById('pool-search-input');
   if (!searchInput) return;
+  let searchQuery = '';
   searchInput.addEventListener('input', () => {
-    const q = searchInput.value.toLowerCase().trim();
-    const items = poolList.querySelectorAll('.pool-item');
-    items.forEach((el) => {
-      const title = el.querySelector('.pool-item__title');
-      if (!title) return;
-      const text = title.textContent.toLowerCase();
-      el.style.display = (!q || text.includes(q)) ? '' : 'none';
+    searchQuery = searchInput.value.toLowerCase().trim();
+    const doubts = store.getDoubts();
+    let poolDoubts = doubts.filter(
+      (d) => (d.status === 'open' || d.status === 'claimed') && d.authorId !== currentUser.id
+    );
+    // Apply pool filter
+    if (activePoolFilter === 'eligible') {
+      poolDoubts = poolDoubts.filter((d) => matchScore(currentUser, d) > 0.2);
+    } else if (activePoolFilter === 'campus') {
+      poolDoubts = poolDoubts.filter((d) => {
+        const author = store.getUserById(d.authorId);
+        return author && author.university === currentUser.university;
+      });
+    }
+    // Apply search filter
+    if (searchQuery) {
+      poolDoubts = poolDoubts.filter((d) => {
+        const desc = (d.description || '').toLowerCase();
+        const tags = (d.tags || []).join(' ').toLowerCase();
+        const author = store.getUserById(d.authorId);
+        const authorName = author ? author.name.toLowerCase() : '';
+        return desc.includes(searchQuery) || tags.includes(searchQuery) || authorName.includes(searchQuery);
+      });
+    }
+    updateBubbles(poolDoubts, currentUser, matchScore);
+    if (poolEmpty) {
+      poolEmpty.style.display = poolDoubts.length === 0 ? '' : 'none';
+    }
+  });
+}
+
+function updateNotifBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  const count = store.getUnreadCount(currentUser.id);
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'flex' : 'none';
+}
+
+function initNotifications() {
+  const bellBtn = document.getElementById('notif-bell');
+  const dropdown = document.getElementById('notif-dropdown');
+  const listEl = document.getElementById('notif-list');
+  const markAllBtn = document.getElementById('notif-mark-all');
+
+  if (!bellBtn || !dropdown) return;
+
+  bellBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = dropdown.style.display === 'block';
+    dropdown.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) renderNotifications();
+  });
+
+  document.addEventListener('click', () => {
+    dropdown.style.display = 'none';
+  });
+
+  if (markAllBtn) {
+    markAllBtn.addEventListener('click', () => {
+      store.markAllNotificationsRead(currentUser.id);
+      renderNotifications();
+      updateNotifBadge();
+    });
+  }
+
+  updateNotifBadge();
+}
+
+function renderNotifications() {
+  const listEl = document.getElementById('notif-list');
+  if (!listEl) return;
+
+  const notifications = store.getNotifications(currentUser.id);
+
+  if (notifications.length === 0) {
+    listEl.innerHTML = '<div class="notif-empty">No notifications yet</div>';
+    return;
+  }
+
+  listEl.innerHTML = notifications.slice(0, 20).map((n) => {
+    const timeAgo = getTimeAgo(n.createdAt);
+    const readClass = n.read ? '' : 'notif-item--unread';
+    const icon = n.type === 'claim' ? '🎯' : n.type === 'resolve' ? '✅' : n.type === 'rate' ? '⭐' : '🔔';
+    return `
+      <div class="notif-item ${readClass}" data-notif-id="${n.id}" data-doubt-id="${n.doubtId}">
+        <span class="notif-item__icon">${icon}</span>
+        <div class="notif-item__content">
+          <div class="notif-item__text">${escapeHtml(n.message)}</div>
+          <div class="notif-item__time">${timeAgo}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  listEl.querySelectorAll('.notif-item').forEach((el) => {
+    el.addEventListener('click', () => {
+      const notifId = el.dataset.notifId;
+      const doubtId = el.dataset.doubtId;
+      store.markNotificationRead(currentUser.id, notifId);
+      updateNotifBadge();
+      if (doubtId) showDoubtDetail(doubtId);
+      document.getElementById('notif-dropdown').style.display = 'none';
     });
   });
+}
+
+function initDetailPanel() {
+  if (detailClose) {
+    detailClose.addEventListener('click', hideDoubtDetail);
+  }
+  // Close on overlay click
+  if (detailPanel) {
+    detailPanel.addEventListener('click', (e) => {
+      if (e.target === detailPanel) hideDoubtDetail();
+    });
+  }
 }
 
 function init() {
@@ -615,6 +874,7 @@ function init() {
   initBubblePoolCanvas();
   initModal();
   initDetailPanel();
+  initNotifications();
 
   logoutBtn.addEventListener('click', () => {
     store.logout();

@@ -18,14 +18,6 @@ function initCTAs() {
 
   function openPopup() {
     popup.style.display = 'flex';
-    // Re-trigger animations
-    const card = popup.querySelector('.choice-popup__card');
-    const bd = popup.querySelector('.choice-popup__backdrop');
-    card.style.animation = 'none';
-    bd.style.animation = 'none';
-    void card.offsetWidth;
-    card.style.animation = '';
-    bd.style.animation = '';
   }
 
   function closePopup() {

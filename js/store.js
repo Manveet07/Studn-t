@@ -135,3 +135,44 @@ export function getPastProfiles() {
     username: u.username,
   }));
 }
+
+// ── Notifications ──
+
+export function getNotifications(userId) {
+  const user = getUserById(userId);
+  return user ? (user.notifications || []) : [];
+}
+
+export function getUnreadCount(userId) {
+  return getNotifications(userId).filter((n) => !n.read).length;
+}
+
+export function addNotification(userId, notification) {
+  const users = getUsers();
+  const idx = users.findIndex((u) => u.id === userId);
+  if (idx === -1) return;
+  if (!users[idx].notifications) users[idx].notifications = [];
+  users[idx].notifications.unshift(notification); // newest first
+  // Keep only last 50 notifications
+  if (users[idx].notifications.length > 50) {
+    users[idx].notifications = users[idx].notifications.slice(0, 50);
+  }
+  setUsers(users);
+}
+
+export function markNotificationRead(userId, notificationId) {
+  const users = getUsers();
+  const idx = users.findIndex((u) => u.id === userId);
+  if (idx === -1) return;
+  const notif = (users[idx].notifications || []).find((n) => n.id === notificationId);
+  if (notif) notif.read = true;
+  setUsers(users);
+}
+
+export function markAllNotificationsRead(userId) {
+  const users = getUsers();
+  const idx = users.findIndex((u) => u.id === userId);
+  if (idx === -1) return;
+  (users[idx].notifications || []).forEach((n) => { n.read = true; });
+  setUsers(users);
+}
