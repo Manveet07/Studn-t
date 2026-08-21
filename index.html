@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PriorityDesk — Get Help From People Who've Been There</title>
+  <title>Studn't — Get Help From People Who've Been There</title>
   <meta name="description" content="A student peer-help platform where doubts float to the right people.">
 
   <!-- Fonts -->
@@ -24,24 +24,22 @@
   <!-- Full-screen canvas: spheres + particles + stars + cursor glow -->
   <canvas id="landing-sphere-canvas"></canvas>
 
-  <!-- Nav Bar -->
+  <!-- Nav Bar (no login/signup) -->
   <nav class="landing-nav">
-    <div class="landing-nav__brand">
-      <span class="landing-nav__icon">?</span>
-      <span class="landing-nav__name">PriorityDesk</span>
-    </div>
+    <a class="landing-nav__brand" href="index.html">
+      <div class="glow-mark">
+        <span class="glow-mark__text">?</span>
+      </div>
+      <span class="landing-nav__name">Studn't</span>
+    </a>
     <div class="landing-nav__links">
       <a href="#" class="landing-nav__link">About</a>
       <a href="#" class="landing-nav__link">How It Works</a>
       <a href="#" class="landing-nav__link">Contact</a>
     </div>
-    <div class="landing-nav__actions">
-      <button id="landing-login" class="landing-nav__signin">Log In</button>
-      <button id="landing-get-started-nav" class="landing-nav__cta pd-btn--magnetic">Sign Up</button>
-    </div>
   </nav>
 
-  <!-- Hero Content — floats directly over the canvas -->
+  <!-- Hero Content -->
   <main class="landing-hero">
     <p class="landing-eyebrow">STUDENT PEER HELP</p>
     <h1 class="landing-hero-title">
@@ -53,14 +51,60 @@
     </p>
 
     <div class="landing-cta-group">
-      <button id="landing-get-started" class="pd-btn pd-btn--cta pd-btn--magnetic">
-        Get Started for Free &rarr;
-      </button>
-      <button class="pd-btn pd-btn--ghost pd-btn--magnetic">
-        Learn More
+      <button id="landing-get-started" class="uiverse-btn pd-btn--magnetic">
+        <div class="uiverse-btn__wrapper">
+          <span>Get Started</span>
+          <div class="uiverse-btn__circle uiverse-btn__circle--1"></div>
+          <div class="uiverse-btn__circle uiverse-btn__circle--2"></div>
+          <div class="uiverse-btn__circle uiverse-btn__circle--3"></div>
+          <div class="uiverse-btn__circle uiverse-btn__circle--4"></div>
+          <div class="uiverse-btn__circle uiverse-btn__circle--5"></div>
+          <div class="uiverse-btn__circle uiverse-btn__circle--6"></div>
+          <div class="uiverse-btn__circle uiverse-btn__circle--7"></div>
+          <div class="uiverse-btn__circle uiverse-btn__circle--8"></div>
+          <div class="uiverse-btn__circle uiverse-btn__circle--9"></div>
+          <div class="uiverse-btn__circle uiverse-btn__circle--10"></div>
+          <div class="uiverse-btn__circle uiverse-btn__circle--11"></div>
+          <div class="uiverse-btn__circle uiverse-btn__circle--12"></div>
+        </div>
       </button>
     </div>
   </main>
+
+  <!-- Login/Signup Choice Popup -->
+  <div class="choice-popup" id="choice-popup" style="display:none">
+    <div class="choice-popup__backdrop" id="choice-backdrop"></div>
+    <div class="choice-popup__card">
+      <div class="choice-popup__title">Welcome to Studn't</div>
+      <div class="choice-popup__subtitle">How would you like to continue?</div>
+      <div class="choice-popup__actions">
+        <button class="choice-popup__btn choice-popup__btn--login" id="choice-login">
+          <div class="choice-popup__btn-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          </div>
+          <div class="choice-popup__btn-text">
+            <div class="choice-popup__btn-label">Log In</div>
+            <div class="choice-popup__btn-desc">I already have an account</div>
+          </div>
+        </button>
+        <button class="choice-popup__btn choice-popup__btn--signup" id="choice-signup">
+          <div class="choice-popup__btn-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          </div>
+          <div class="choice-popup__btn-text">
+            <div class="choice-popup__btn-label">Sign Up</div>
+            <div class="choice-popup__btn-desc">Create a new account</div>
+          </div>
+        </button>
+      </div>
+      <button class="choice-popup__close" id="choice-close">&times;</button>
+    </div>
+  </div>
+
+  <!-- Bubble Transition Overlay -->
+  <div class="bubble-transition" id="bubble-transition" style="display:none">
+    <div class="bubble-transition__orb" id="transition-orb"></div>
+  </div>
 
   <script type="module" src="js/pages/landing.js"></script>
   <script type="module" src="js/cursor.js"></script>

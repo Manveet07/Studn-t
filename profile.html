@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — Studn't</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/pages/profile-v3.css">
+</head>
+<body class="pd-page">
+
+  <div id="pd-cursor"></div>
+  <div id="pd-cursor-glow"></div>
+
+  <div class="profile-bg"></div>
+
+  <div class="profile-shell">
+
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar__brand">
+        <span class="glow-mark__text">?</span>
+      </a>
+      <nav class="sidebar__nav">
+        <a class="sidebar__link" href="dashboard.html" title="Dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </a>
+        <a class="sidebar__link sidebar__link--active" href="profile.html" title="Profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </a>
+      </nav>
+      <div class="sidebar__spacer"></div>
+      <button class="sidebar__logout" id="profile-logout" title="Log out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </aside>
+
+    <!-- Profile Content -->
+    <main class="profile-main">
+      <!-- System header -->
+      <div class="profile-header">
+        <div class="profile-header__system">SYSTEM: DOUBTS & REP TRACKER</div>
+        <div class="profile-header__title">STUDENT_TERMINAL_v2.6</div>
+      </div>
+
+      <div class="profile-grid">
+
+        <!-- Top Left: Days Active -->
+        <div class="pcard pcard--days">
+          <div class="pcard__header">
+            <span class="pcard__label">DAYS ACTIVE</span>
+            <svg class="pcard__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="pcard__big" id="stat-days">0</div>
+          <div class="pcard__sub">Streak maintained</div>
+        </div>
+
+        <!-- Center: Profile Photo -->
+        <div class="pcard pcard--photo" id="photo-card">
+          <div class="pcard__photo-area" id="profile-photo-area">
+            <div class="pcard__photo-placeholder" id="photo-placeholder">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <label class="pcard__upload-btn" for="avatar-upload">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <input type="file" id="avatar-upload" accept="image/*" style="display:none">
+            </label>
+          </div>
+          <div class="pcard__name-bar">
+            <div class="pcard__name-row">
+              <span class="pcard__name" id="profile-name">—</span>
+              <span class="pcard__badge">BETA_ACCESS</span>
+            </div>
+            <div class="pcard__username" id="profile-username">@—</div>
+            <div class="pcard__bio" id="profile-bio">&gt;_ i code</div>
+          </div>
+        </div>
+
+        <!-- Top Right: Reputation -->
+        <div class="pcard pcard--rep">
+          <div class="pcard__header">
+            <span class="pcard__label">REPUTATION</span>
+            <svg class="pcard__icon pcard__icon--orange" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div class="pcard__rep-row">
+            <span class="pcard__big pcard__big--orange" id="stat-rep">50</span>
+            <span class="pcard__rep-unit">REP</span>
+          </div>
+          <div class="pcard__badge pcard__badge--newcomer" id="rep-level">NEWCOMER</div>
+        </div>
+
+        <!-- Middle Left: Doubts Asked -->
+        <div class="pcard pcard--asked">
+          <div class="pcard__header">
+            <span class="pcard__label">DOUBTS ASKED</span>
+            <svg class="pcard__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="pcard__big" id="stat-asked">0</div>
+          <div class="pcard__sub">Open tickets resolved: <span id="stat-helped">0</span></div>
+        </div>
+
+        <!-- Middle Right: Skill Set -->
+        <div class="pcard pcard--skills">
+          <div class="pcard__header">
+            <span class="pcard__label">SKILL SET</span>
+          </div>
+          <div class="pcard__skill-tags" id="skill-tags"></div>
+        </div>
+
+        <!-- Bottom Left: Rep Progress -->
+        <div class="pcard pcard--repbar">
+          <div class="pcard__header">
+            <span class="pcard__label">REPUTATION LEVEL PROGRESS</span>
+            <span class="pcard__xp" id="profile-rep-value">50 / 100 XP</span>
+          </div>
+          <div class="pcard__bar-track">
+            <div class="pcard__bar-fill" id="profile-rep-fill" style="width: 50%"></div>
+          </div>
+          <div class="pcard__bar-labels">
+            <span>BEGINNER</span>
+            <span>NEWCOMER</span>
+            <span>LEGENDARY</span>
+          </div>
+        </div>
+
+        <!-- Bottom Center: Engagement -->
+        <div class="pcard pcard--engagement">
+          <div class="pcard__header">
+            <span class="pcard__label">ENGAGEMENT</span>
+          </div>
+          <div class="pcard__engagement-value" id="stat-engagement">0 this week</div>
+          <div class="pcard__sub">Telemetry signal active</div>
+          <div class="pcard__chart" id="engagement-chart"></div>
+        </div>
+
+        <!-- Bottom Right: User Details -->
+        <div class="pcard pcard--details">
+          <div class="pcard__header">
+            <span class="pcard__label">USER DETAILS TERMINAL</span>
+          </div>
+          <div class="pcard__detail-rows">
+            <div class="pcard__detail-row">
+              <span class="pcard__detail-label">Email</span>
+              <span class="pcard__detail-value" id="profile-email">—</span>
+            </div>
+            <div class="pcard__detail-row">
+              <span class="pcard__detail-label">University</span>
+              <span class="pcard__detail-value" id="profile-university">—</span>
+            </div>
+            <div class="pcard__detail-row">
+              <span class="pcard__detail-label">Campus</span>
+              <span class="pcard__detail-value" id="profile-campus">—</span>
+            </div>
+            <div class="pcard__detail-row">
+              <span class="pcard__detail-label">Year</span>
+              <span class="pcard__detail-value" id="profile-year">—</span>
+            </div>
+            <div class="pcard__detail-row">
+              <span class="pcard__detail-label">Branch</span>
+              <span class="pcard__detail-value" id="profile-branch">—</span>
+            </div>
+            <div class="pcard__detail-row">
+              <span class="pcard__detail-label">Joined</span>
+              <span class="pcard__detail-value" id="profile-joined">—</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="js/pages/profile.js"></script>
+  <script type="module" src="js/cursor.js"></script>
+</body>
+</html>
