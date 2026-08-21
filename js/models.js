@@ -39,6 +39,7 @@ export function createUser({ name, username, email, password, university, campus
     nonAcademicSkills: nonAcademicSkills || [],
     reputationScore: 50,
     ratingHistory: [],
+    notifications: [],
     createdAt: Date.now(),
   };
 }
@@ -91,12 +92,13 @@ export function createDoubt({ authorId, category, tags, courseContext, descripti
     courseContext: courseContext || '',
     description: description.trim(),
     urgency: Math.max(0, Math.min(100, urgency)),
-    status: 'open',
+    status: 'open', // open → claimed → resolved
     claimedBy: null,
     createdAt: Date.now(),
     claimedAt: null,
     resolvedAt: null,
-    ratingGiven: null,
+    ratingGiven: null, // 1-5 stars
+    ratingTimestamp: null,
   };
 }
 
@@ -120,4 +122,89 @@ export function validateDoubt({ category, tags, description, urgency }) {
   }
 
   return { valid: errors.length === 0, errors };
+}
+
+// ── Reply ──
+
+/**
+ * Create a new Reply object.
+ * Replies are answers to doubts, posted by anyone who can see the doubt.
+ */
+export function createReply({ authorId, doubtId, text }) {
+  return {
+    id: generateId('r'),
+    authorId,
+    doubtId,
+    text: text.trim(),
+    likes: [],       // array of user IDs who liked
+    dislikes: [],    // array of user IDs who disliked
+    isBestAnswer: false,
+    createdAt: Date.now(),
+  };
+}
+
+/**
+ * Validate reply fields.
+ */
+export function validateReply({ text }) {
+  const errors = [];
+  if (!text || text.trim().length < 5) {
+    errors.push('Reply must be at least 5 characters.');
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+// ── Notification ──
+
+/**
+ * Create a notification object.
+ * @param {string} type - 'claim' | 'resolve' | 'rate' | 'system'
+ * @param {string} fromUserId - who triggered it
+ * @param {string} doubtId - related doubt
+ * @param {string} message - display text
+ */
+export function createNotification({ type, fromUserId, doubtId, message }) {
+  return {
+    id: generateId('n'),
+    type,
+    fromUserId,
+    doubtId,
+    message,
+    read: false,
+    createdAt: Date.now(),
+  };
+}
+
+// ── Reputation Scoring ──
+
+/**
+ * Calculate reputation change for an action.
+ * Returns the delta (positive or negative).
+ */
+export function getRepDelta(action, rating = null) {
+  switch (action) {
+    case 'claim': return 5;      // +5 for claiming a doubt
+    case 'resolve': return 10;   // +10 for resolving a doubt
+    case 'rate_5': return 4;     // +4 for getting 5-star
+    case 'rate_4': return 3;     // +3 for getting 4-star
+    case 'rate_3': return 1;     // +1 for getting 3-star
+    case 'rate_2': return -1;    // -1 for getting 2-star
+    case 'rate_1': return -3;    // -3 for getting 1-star
+    case 'reply_liked': return 2;  // +2 for getting a reply liked
+    case 'best_answer': return 15; // +15 for getting best answer
+    case 'reply_disliked': return -1; // -1 for getting a reply disliked
+    default: return 0;
+  }
+}
+
+/**
+ * Apply reputation change to a user.
+ */
+export function applyRepChange(userId, action, rating = null) {
+  const delta = getRepDelta(action, rating);
+  const user = store.getUserById(userId);
+  if (!user) return;
+
+  const newScore = Math.max(0, Math.min(100, (user.reputationScore || 50) + delta));
+  store.updateUser(userId, { reputationScore: newScore });
 }

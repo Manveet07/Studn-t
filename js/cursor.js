@@ -76,10 +76,14 @@ function initCursorHover() {
 }
 
 // ── Magnetic button behavior ──
+// Only on landing page (Uiverse button) — skip on auth/dashboard/profile pages
 const MAGNETIC_RADIUS = 40;
 const MAGNETIC_STRENGTH = 6;
 
 function initMagneticButtons() {
+  // Only apply magnetic effect on the landing page
+  if (!document.querySelector('.landing-hero')) return;
+
   const magneticButtons = document.querySelectorAll('.pd-btn--primary, .pd-btn--magnetic');
 
   magneticButtons.forEach((btn) => {
