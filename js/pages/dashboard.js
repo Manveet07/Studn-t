@@ -482,11 +482,11 @@ function showDoubtDetail(doubtId) {
     renderReplies(doubtId, replyThread);
   }
 
-  detailPanel.style.display = 'block';
+  detailPanel.classList.add('detail-panel--open');
 }
 
 function hideDoubtDetail() {
-  detailPanel.style.display = 'none';
+  detailPanel.classList.remove('detail-panel--open');
 }
 
 function handleClaim(doubtId) {
@@ -764,7 +764,8 @@ function handlePostReply(doubtId, textInput, containerEl) {
 // ═══════════════════════════════════════════════════════════════
 
 function openModal() {
-  modalOverlay.style.display = 'flex';
+  // Force reflow then add open class for animation
+  modalOverlay.classList.add('modal-overlay--open');
   modalErrors.innerHTML = '';
   selectedTags = [];
   selectedCategory = 'academic';
@@ -777,11 +778,11 @@ function openModal() {
 }
 
 function closeModal() {
+  modalOverlay.classList.remove('modal-overlay--open');
   modalOverlay.classList.add('modal-overlay--exit');
   setTimeout(() => {
-    modalOverlay.style.display = 'none';
     modalOverlay.classList.remove('modal-overlay--exit');
-  }, 250);
+  }, 280);
 }
 
 function renderModalTags() {
@@ -868,7 +869,7 @@ function initModal() {
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modalOverlay.style.display === 'flex') {
+    if (e.key === 'Escape' && modalOverlay.classList.contains('modal-overlay--open')) {
       closeModal();
     }
   });
@@ -1052,6 +1053,12 @@ function initDetailPanel() {
   if (detailPanel) {
     detailPanel.addEventListener('click', (e) => {
       if (e.target === detailPanel) hideDoubtDetail();
+    });
+    // Also close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && detailPanel.classList.contains('detail-panel--open')) {
+        hideDoubtDetail();
+      }
     });
   }
 }

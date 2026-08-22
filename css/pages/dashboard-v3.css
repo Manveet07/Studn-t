@@ -11,6 +11,15 @@
   background: #0a1019;
 }
 
+#dashboard-bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .dash-bg::before {
   content: '';
   position: absolute;
@@ -41,6 +50,7 @@
   height: 100vh;
   overflow: hidden;
   opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
 .app-shell--ready {
@@ -76,6 +86,11 @@
   margin-bottom: var(--space-5);
   text-decoration: none;
   box-shadow: 0 0 16px rgba(56, 189, 248, 0.2);
+  transition: box-shadow 0.2s ease;
+}
+
+.sidebar__brand:hover {
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.35);
 }
 
 .sidebar__brand .glow-mark__text {
@@ -114,6 +129,7 @@
 
 .sidebar__link:hover {
   color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .sidebar__link--active {
@@ -520,9 +536,15 @@
   transition: all 0.2s;
 }
 
-.pool-tab--active {
-  background: rgba(37, 99, 160, 0.15);
-  border-color: rgba(37, 99, 160, 0.3);
+.pool-tab:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+}
+
+.pool-tab--active:hover {
+  background: rgba(37, 99, 160, 0.18);
+  border-color: rgba(37, 99, 160, 0.35);
   color: var(--blue-300);
 }
 
@@ -737,6 +759,19 @@
   justify-content: center;
   background: rgba(5, 8, 14, 0.85);
   backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modal-overlay--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-overlay--exit {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .modal {
@@ -747,6 +782,12 @@
   background: rgba(12, 18, 30, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg);
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal-overlay--open .modal {
+  transform: translateY(0) scale(1);
 }
 
 .modal__header {
@@ -943,6 +984,16 @@
   z-index: 200;
   background: rgba(10, 16, 26, 0.96);
   border-left: 1px solid rgba(255, 255, 255, 0.06);
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+}
+
+.detail-panel--open {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .detail-panel__inner {

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — Studn't</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -16,8 +17,9 @@
   <div id="pd-cursor"></div>
   <div id="pd-cursor-glow"></div>
 
-  <!-- Background with subtle cyan glow -->
+  <!-- Background with subtle cyan glow + shooting stars -->
   <div class="dash-bg"></div>
+  <canvas id="dashboard-bg-canvas"></canvas>
 
   <div class="app-shell">
 
@@ -119,7 +121,7 @@
   </div>
 
   <!-- Doubt Creation Modal -->
-  <div class="modal-overlay" id="modal-overlay" style="display:none">
+  <div class="modal-overlay" id="modal-overlay">
     <div class="modal">
       <div class="modal__header">
         <div class="modal__title">Post a Doubt</div>
@@ -159,7 +161,7 @@
   </div>
 
   <!-- Detail Panel -->
-  <div class="detail-panel" id="bubble-detail" style="display:none">
+  <div class="detail-panel" id="bubble-detail">
     <div class="detail-panel__inner">
       <button class="detail-panel__close" id="detail-close">×</button>
       <div class="detail-panel__category" id="detail-category"></div>
