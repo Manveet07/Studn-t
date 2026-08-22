@@ -211,73 +211,139 @@
   border: 2px solid rgba(8, 12, 20, 0.95);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   PURE GLASS NOTIFICATION DRAWER (Reference-Matched)
+   ═══════════════════════════════════════════════════════════════ */
 .notif-dropdown {
   position: absolute;
-  left: 60px;
+  left: 68px;
   top: 0;
-  width: 320px;
-  max-height: 400px;
-  background: rgba(12, 18, 30, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-  z-index: 300;
+  width: 390px;
+  max-height: 500px;
+  background: rgba(14, 20, 32, 0.72);
+  backdrop-filter: blur(48px) saturate(200%);
+  -webkit-backdrop-filter: blur(48px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.8), 0 0 40px rgba(37, 99, 160, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+  z-index: 500;
   overflow: hidden;
+  animation: notifFadeIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes notifFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
 }
 
 .notif-dropdown__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
+  padding: 20px 22px 14px 22px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .notif-dropdown__title {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
 }
 
 .notif-dropdown__mark-all {
-  font-size: 0.65rem;
-  color: var(--blue-300);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #8a99ad;
   background: none;
   border: none;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.notif-dropdown__mark-all:hover {
+  color: var(--sphere-cyan);
+  text-shadow: 0 0 10px var(--sphere-cyan);
 }
 
 .notif-dropdown__list {
-  max-height: 340px;
+  max-height: 420px;
   overflow-y: auto;
+  padding: 14px 14px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.3) transparent;
 }
 
-.notif-dropdown__list::-webkit-scrollbar { width: 3px; }
-.notif-dropdown__list::-webkit-scrollbar-track { background: transparent; }
-.notif-dropdown__list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+.notif-dropdown__list::-webkit-scrollbar {
+  width: 5px;
+}
 
+.notif-dropdown__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notif-dropdown__list::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 4px;
+}
+
+.notif-dropdown__list::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
+}
+
+/* ── Pure Glass Capsule Pill Items ── */
 .notif-item {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  align-items: center;
+  gap: 14px;
+  padding: 9px 10px 9px 10px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  transition: background 0.15s;
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 9999px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  user-select: none;
 }
 
 .notif-item:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.085);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .notif-item--unread {
-  background: rgba(37, 99, 160, 0.05);
+  background: rgba(37, 99, 160, 0.22);
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 4px 20px rgba(37, 99, 160, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .notif-item__icon {
-  font-size: 0.9rem;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(37, 99, 160, 0.35), rgba(20, 35, 60, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
   flex-shrink: 0;
-  margin-top: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .notif-item__content {
@@ -286,21 +352,48 @@
 }
 
 .notif-item__text {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .notif-item__time {
-  font-size: 0.6rem;
-  color: var(--text-tertiary);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #8a99ad;
   margin-top: 2px;
 }
 
+.notif-item__arrow {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background: rgba(235, 240, 248, 0.92);
+  color: #0b1220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.notif-item:hover .notif-item__arrow {
+  background: #ffffff;
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
+  color: #0284c7;
+}
+
 .notif-empty {
-  padding: var(--space-6);
+  padding: 44px 20px;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.88rem;
   color: var(--text-tertiary);
 }
 

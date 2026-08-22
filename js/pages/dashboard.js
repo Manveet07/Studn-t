@@ -1066,6 +1066,9 @@ function renderNotifications() {
           <div class="notif-item__text">${escapeHtml(n.message)}</div>
           <div class="notif-item__time">${timeAgo}</div>
         </div>
+        <div class="notif-item__arrow" aria-label="Open">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
       </div>
     `;
   }).join('');
