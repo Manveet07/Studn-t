@@ -7,7 +7,8 @@
    ============================================================ */
 
 import * as store from '../store.js';
-import { createDoubt, validateDoubt, createReply, validateReply, createNotification, applyRepChange } from '../models.js';
+import { createDoubt, validateDoubt, createReply, validateReply, createNotification } from '../models.js';
+import { recordContributionEvent } from '../services/leaderboardService.js';
 import { ACADEMIC_SKILLS, NONACADEMIC_CATEGORIES } from '../categories.js';
 import { matchScore } from '../algorithms/matchScore.js';
 import { priorityScore } from '../algorithms/priorityScore.js';
@@ -482,11 +483,11 @@ function showDoubtDetail(doubtId) {
     renderReplies(doubtId, replyThread);
   }
 
-  detailPanel.style.display = 'block';
+  detailPanel.classList.add('detail-panel--open');
 }
 
 function hideDoubtDetail() {
-  detailPanel.style.display = 'none';
+  detailPanel.classList.remove('detail-panel--open');
 }
 
 function handleClaim(doubtId) {
@@ -496,8 +497,12 @@ function handleClaim(doubtId) {
     claimedAt: Date.now(),
   });
 
-  // Award rep for claiming
-  applyRepChange(currentUser.id, 'claim');
+  // Record claim contribution event (+5 points)
+  recordContributionEvent({
+    userId: currentUser.id,
+    action: 'claim',
+    doubtId,
+  });
 
   // Notify the author
   const doubt = store.getDoubtById(doubtId);
@@ -523,8 +528,12 @@ function handleResolve(doubtId) {
     resolvedAt: Date.now(),
   });
 
-  // Award rep for resolving
-  applyRepChange(currentUser.id, 'resolve');
+  // Record resolve contribution event (+10 points)
+  recordContributionEvent({
+    userId: currentUser.id,
+    action: 'resolve',
+    doubtId,
+  });
 
   // Notify the author
   const doubt = store.getDoubtById(doubtId);
@@ -553,8 +562,13 @@ function handleRate(doubtId, rating) {
     ratingTimestamp: Date.now(),
   });
 
-  // Award rep to helper based on rating
-  applyRepChange(doubt.claimedBy, `rate_${rating}`);
+  // Record rating contribution event for the helper
+  recordContributionEvent({
+    userId: doubt.claimedBy,
+    action: `rate_${rating}`,
+    doubtId,
+    rating,
+  });
 
   // Add rating to helper's history
   const helper = store.getUserById(doubt.claimedBy);
@@ -667,14 +681,16 @@ function handleReplyVote(replyId, action, doubtId, containerEl) {
 
   if (!reply) return;
 
-  // Award/penalize rep to reply author
-  const prevLikes = action === 'like' ? (reply.likes || []).length : 0;
-  const prevDislikes = action === 'dislike' ? (reply.dislikes || []).length : 0;
-
   if (action === 'like') {
     if (reply.likes.includes(currentUser.id)) {
-      // Just liked → +2 rep
-      applyRepChange(reply.authorId, 'reply_liked');
+      // Just liked -> +2 points
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_liked',
+        doubtId,
+        replyId,
+      });
+
       // Notify reply author
       const doubt = store.getDoubtById(doubtId);
       const notif = createNotification({
@@ -685,14 +701,29 @@ function handleReplyVote(replyId, action, doubtId, containerEl) {
       });
       store.addNotification(reply.authorId, notif);
     } else {
-      // Unliked → -2 rep
-      applyRepChange(reply.authorId, 'reply_disliked');
+      // Unliked -> -1 or undo (+2 reverted by -1 / penalty)
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_disliked',
+        doubtId,
+        replyId,
+      });
     }
   } else if (action === 'dislike') {
     if (reply.dislikes.includes(currentUser.id)) {
-      applyRepChange(reply.authorId, 'reply_disliked');
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_disliked',
+        doubtId,
+        replyId,
+      });
     } else {
-      applyRepChange(reply.authorId, 'reply_liked'); // undo previous like
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_liked',
+        doubtId,
+        replyId,
+      });
     }
   }
 
@@ -707,10 +738,16 @@ function handleMarkBestAnswer(replyId, doubtId, containerEl) {
     resolvedAt: Date.now(),
   });
 
-  // Award best answer rep
+  // Record best answer event (+15 points)
   const reply = store.getReplies().find((r) => r.id === replyId);
   if (reply) {
-    applyRepChange(reply.authorId, 'best_answer');
+    recordContributionEvent({
+      userId: reply.authorId,
+      action: 'best_answer',
+      doubtId,
+      replyId,
+    });
+
     // Notify the helper
     const doubt = store.getDoubtById(doubtId);
     const notif = createNotification({
@@ -764,7 +801,8 @@ function handlePostReply(doubtId, textInput, containerEl) {
 // ═══════════════════════════════════════════════════════════════
 
 function openModal() {
-  modalOverlay.style.display = 'flex';
+  // Force reflow then add open class for animation
+  modalOverlay.classList.add('modal-overlay--open');
   modalErrors.innerHTML = '';
   selectedTags = [];
   selectedCategory = 'academic';
@@ -777,11 +815,11 @@ function openModal() {
 }
 
 function closeModal() {
+  modalOverlay.classList.remove('modal-overlay--open');
   modalOverlay.classList.add('modal-overlay--exit');
   setTimeout(() => {
-    modalOverlay.style.display = 'none';
     modalOverlay.classList.remove('modal-overlay--exit');
-  }, 250);
+  }, 280);
 }
 
 function renderModalTags() {
@@ -868,7 +906,7 @@ function initModal() {
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modalOverlay.style.display === 'flex') {
+    if (e.key === 'Escape' && modalOverlay.classList.contains('modal-overlay--open')) {
       closeModal();
     }
   });
@@ -1052,6 +1090,12 @@ function initDetailPanel() {
   if (detailPanel) {
     detailPanel.addEventListener('click', (e) => {
       if (e.target === detailPanel) hideDoubtDetail();
+    });
+    // Also close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && detailPanel.classList.contains('detail-panel--open')) {
+        hideDoubtDetail();
+      }
     });
   }
 }

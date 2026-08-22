@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   CURRENT_USER: 'pd_currentUserId',
   DOUBTS: 'pd_doubts',
   REPLIES: 'pd_replies',
+  EVENTS: 'pd_events',
 };
 
 // ── Read ──
@@ -103,7 +104,7 @@ export function updateDoubt(id, updates) {
 
 export function usernameExists(username) {
   return getUsers().some(
-    (u) => u.username.toLowerCase() === username.toLowerCase()
+    (u) => typeof u?.username === 'string' && u.username.toLowerCase() === username.toLowerCase()
   );
 }
 
@@ -264,3 +265,51 @@ export function markBestAnswer(replyId, doubtId) {
   setReplies(replies);
   return replies[idx] || null;
 }
+
+// ── Reputation / Contribution Events ──
+
+export function getEvents() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.EVENTS);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function setEvents(events) {
+  localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+}
+
+export function addEvent(event) {
+  const events = getEvents();
+  events.push(event);
+  setEvents(events);
+  return event;
+}
+
+export function getEventsByUser(userId) {
+  return getEvents().filter((e) => e.userId === userId);
+}
+
+/**
+ * Check if a duplicate action has already awarded points.
+ * Prevents double-claiming, double-resolving, double-marking best answer, or duplicate rating for same doubt.
+ */
+export function hasDuplicateEvent(userId, action, { doubtId = null, replyId = null } = {}) {
+  const events = getEvents();
+  return events.some((e) => {
+    if (e.userId !== userId || e.action !== action) return false;
+    if (doubtId && e.doubtId !== doubtId) return false;
+    if (replyId && e.replyId !== replyId) return false;
+    return true;
+  });
+}
+
+/**
+ * Get events created within a specific timestamp window [startTime, endTime].
+ */
+export function getEventsByDateRange(startTime = 0, endTime = Infinity) {
+  return getEvents().filter((e) => e.createdAt >= startTime && e.createdAt <= endTime);
+}
+
