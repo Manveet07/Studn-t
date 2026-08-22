@@ -153,6 +153,9 @@ function init() {
     return;
   }
 
+  // Show content after auth confirmed
+  document.querySelector('.profile-shell').style.opacity = '1';
+
   renderProfile(viewUser);
   loadAvatar(viewUser);
   initAvatarUpload();

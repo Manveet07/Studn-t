@@ -16,6 +16,8 @@
   display: flex;
   height: 100vh;
   overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 /* ── Sidebar ── */
@@ -44,6 +46,11 @@
   margin-bottom: var(--space-5);
   text-decoration: none;
   box-shadow: 0 0 16px rgba(56, 189, 248, 0.2);
+  transition: box-shadow 0.2s ease;
+}
+
+.sidebar__brand:hover {
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.35);
 }
 
 .sidebar__brand .glow-mark__text {
@@ -71,10 +78,10 @@
   justify-content: center;
   color: var(--text-tertiary);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color 0.2s, background 0.2s;
 }
 
-.sidebar__link:hover { color: var(--text-secondary); }
+.sidebar__link:hover { color: var(--text-secondary); background: rgba(255, 255, 255, 0.04); }
 
 .sidebar__link--active {
   color: var(--blue-300);
@@ -156,6 +163,12 @@
   background: rgba(8, 14, 26, 0.8);
   padding: var(--space-3) var(--space-4);
   overflow: hidden;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.pcard:hover {
+  border-color: rgba(0, 200, 220, 0.25);
+  box-shadow: 0 0 20px rgba(0, 200, 220, 0.04);
 }
 
 /* Corner markers */
