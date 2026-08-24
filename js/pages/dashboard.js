@@ -7,7 +7,8 @@
    ============================================================ */
 
 import * as store from '../store.js';
-import { createDoubt, validateDoubt, createNotification, applyRepChange } from '../models.js';
+import { createDoubt, validateDoubt, createReply, validateReply, createNotification } from '../models.js';
+import { recordContributionEvent } from '../services/leaderboardService.js';
 import { ACADEMIC_SKILLS, NONACADEMIC_CATEGORIES } from '../categories.js';
 import { matchScore } from '../algorithms/matchScore.js';
 import { priorityScore } from '../algorithms/priorityScore.js';
@@ -195,17 +196,34 @@ function initDashboardBackground() {
 // MY DOUBTS LIST
 // ═══════════════════════════════════════════════════════════════
 
+const MY_DOUBTS_EMPTY_COPY = {
+  active: '<strong>No doubts yet</strong><br>Hit the <strong>+</strong> button next to search to post your first doubt.',
+  claimed: '<strong>Nothing claimed yet</strong><br>Claim a doubt from the pool to help someone — it will show up here.',
+  solved: '<strong>No resolved doubts yet</strong><br>Doubts you have posted will land here once they are marked resolved.',
+};
+
 function renderMyDoubts() {
   if (!currentUser) return;
 
   const doubts = store.getDoubts();
   const filtered = doubts.filter((d) => {
     if (activeTab === 'active') {
+      // Doubts I posted that are still open or claimed
       return (d.status === 'open' || d.status === 'claimed') && d.authorId === currentUser.id;
+    } else if (activeTab === 'claimed') {
+      // Doubts claimed by me from others (not my own doubts)
+      return d.status === 'claimed' && d.claimedBy === currentUser.id;
     } else {
+      // solved tab: my resolved doubts
       return d.status === 'resolved' && d.authorId === currentUser.id;
     }
   });
+
+  // Update empty-state copy to match active tab
+  const emptyTextEl = document.getElementById('my-doubts-empty-text');
+  if (emptyTextEl) {
+    emptyTextEl.innerHTML = MY_DOUBTS_EMPTY_COPY[activeTab] || MY_DOUBTS_EMPTY_COPY.active;
+  }
 
   if (filtered.length === 0) {
     myDoubtsList.innerHTML = '';
@@ -266,16 +284,16 @@ function renderPool() {
 
   const doubts = store.getDoubts();
 
-  // Filter open doubts not by current user
+  // Show ALL active doubts in the pool (including your own)
   let poolDoubts = doubts.filter(
-    (d) => (d.status === 'open' || d.status === 'claimed') && d.authorId !== currentUser.id
+    (d) => d.status === 'open' || d.status === 'claimed'
   );
 
-  // Apply filter
+  // Apply filter — matchScore(doubt, user) is the correct argument order
   if (activePoolFilter === 'eligible') {
     poolDoubts = poolDoubts.filter((d) => {
-      const match = matchScore(currentUser, d);
-      return match > 0.2;
+      const match = matchScore(d, currentUser);
+      return match >= 0.6;
     });
   } else if (activePoolFilter === 'campus') {
     poolDoubts = poolDoubts.filter((d) => {
@@ -329,7 +347,8 @@ function showDoubtDetail(doubtId) {
   const isAuthor = doubt.authorId === currentUser.id;
   const isClaimer = doubt.claimedBy === currentUser.id;
   const canClaim = doubt.status === 'open' && !isAuthor;
-  const canResolve = doubt.status === 'claimed' && isClaimer;
+  // Only the doubt's author can mark it resolved — the helper answered it, the poster closes it
+  const canResolve = doubt.status === 'claimed' && isAuthor;
   const canRate = doubt.status === 'resolved' && isAuthor && !doubt.ratingGiven;
 
   // Author info
@@ -427,6 +446,14 @@ function showDoubtDetail(doubtId) {
     <div class="detail-panel__actions">
       ${actionsHtml}
     </div>
+    <div class="detail-panel__section">
+      <div class="detail-panel__section-label">REPLIES</div>
+      <div class="reply-thread" id="reply-thread"></div>
+      <div class="reply-input-wrap">
+        <textarea class="reply-input" id="reply-input" placeholder="Write a reply..." rows="2"></textarea>
+        <button class="reply-submit" id="reply-submit">Reply</button>
+      </div>
+    </div>
   `;
 
   // Insert before existing actions div
@@ -458,11 +485,27 @@ function showDoubtDetail(doubtId) {
     });
   }
 
-  detailPanel.style.display = 'block';
+  // Wire reply input
+  const replyInput = body.querySelector('#reply-input');
+  const replySubmit = body.querySelector('#reply-submit');
+  const replyThread = body.querySelector('#reply-thread');
+
+  if (replySubmit && replyInput && replyThread) {
+    replySubmit.addEventListener('click', () => handlePostReply(doubtId, replyInput, replyThread));
+    replyInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handlePostReply(doubtId, replyInput, replyThread);
+      }
+    });
+    renderReplies(doubtId, replyThread);
+  }
+
+  detailPanel.classList.add('detail-panel--open');
 }
 
 function hideDoubtDetail() {
-  detailPanel.style.display = 'none';
+  detailPanel.classList.remove('detail-panel--open');
 }
 
 function handleClaim(doubtId) {
@@ -472,8 +515,12 @@ function handleClaim(doubtId) {
     claimedAt: Date.now(),
   });
 
-  // Award rep for claiming
-  applyRepChange(currentUser.id, 'claim');
+  // Record claim contribution event (+5 points)
+  recordContributionEvent({
+    userId: currentUser.id,
+    action: 'claim',
+    doubtId,
+  });
 
   // Notify the author
   const doubt = store.getDoubtById(doubtId);
@@ -489,35 +536,40 @@ function handleClaim(doubtId) {
 
   hideDoubtDetail();
   renderMyDoubts();
-  renderPool();
   refreshBubbles();
   updateNotifBadge();
 }
 
 function handleResolve(doubtId) {
+  const doubt = store.getDoubtById(doubtId);
+  if (!doubt) return;
+
   store.updateDoubt(doubtId, {
     status: 'resolved',
     resolvedAt: Date.now(),
   });
 
-  // Award rep for resolving
-  applyRepChange(currentUser.id, 'resolve');
+  // The author closes the doubt, but reputation and the contribution event
+  // credit the helper who actually answered it (doubt.claimedBy)
+  if (doubt.claimedBy) {
+    recordContributionEvent({
+      userId: doubt.claimedBy,
+      action: 'resolve',
+      doubtId,
+    });
 
-  // Notify the author
-  const doubt = store.getDoubtById(doubtId);
-  if (doubt) {
+    // Notify the helper that their answer was accepted
     const notif = createNotification({
       type: 'resolve',
       fromUserId: currentUser.id,
       doubtId,
-      message: `${currentUser.name} resolved your doubt: "${doubt.description.slice(0, 40)}..."`,
+      message: `${currentUser.name} accepted your help and resolved: "${doubt.description.slice(0, 40)}..."`,
     });
-    store.addNotification(doubt.authorId, notif);
+    store.addNotification(doubt.claimedBy, notif);
   }
 
   hideDoubtDetail();
   renderMyDoubts();
-  renderPool();
   refreshBubbles();
   updateNotifBadge();
 }
@@ -531,8 +583,13 @@ function handleRate(doubtId, rating) {
     ratingTimestamp: Date.now(),
   });
 
-  // Award rep to helper based on rating
-  applyRepChange(doubt.claimedBy, `rate_${rating}`);
+  // Record rating contribution event for the helper
+  recordContributionEvent({
+    userId: doubt.claimedBy,
+    action: `rate_${rating}`,
+    doubtId,
+    rating,
+  });
 
   // Add rating to helper's history
   const helper = store.getUserById(doubt.claimedBy);
@@ -553,9 +610,211 @@ function handleRate(doubtId, rating) {
 
   hideDoubtDetail();
   renderMyDoubts();
-  renderPool();
   refreshBubbles();
   updateNotifBadge();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REPLY SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+function renderReplies(doubtId, containerEl) {
+  const replies = store.getRepliesByDoubt(doubtId);
+  const doubt = store.getDoubtById(doubtId);
+  if (!doubt || !containerEl) return;
+
+  const isAuthor = doubt.authorId === currentUser.id;
+  const isResolved = doubt.status === 'resolved';
+
+  if (replies.length === 0) {
+    containerEl.innerHTML = '<div class="reply-empty">No replies yet. Be the first to help!</div>';
+    return;
+  }
+
+  containerEl.innerHTML = replies.map((reply) => {
+    const author = store.getUserById(reply.authorId);
+    if (!author) return '';
+
+    const likeCount = (reply.likes || []).length;
+    const dislikeCount = (reply.dislikes || []).length;
+    const didLike = (reply.likes || []).includes(currentUser.id);
+    const didDislike = (reply.dislikes || []).includes(currentUser.id);
+    const bestClass = reply.isBestAnswer ? ' reply-card--best' : '';
+    const bestBadge = reply.isBestAnswer ? '<span class="reply-card__best-badge">✓ BEST ANSWER</span>' : '';
+    const canMarkBest = isAuthor && !isResolved && !reply.isBestAnswer && reply.authorId !== currentUser.id;
+    const timeAgo = getTimeAgo(reply.createdAt);
+
+    return `
+      <div class="reply-card${bestClass}" data-reply-id="${reply.id}">
+        <div class="reply-card__header">
+          <div class="reply-card__author">
+            <div class="reply-card__avatar">${author.name.charAt(0).toUpperCase()}</div>
+            <div class="reply-card__author-info">
+              <span class="reply-card__name">${escapeHtml(author.name)}</span>
+              <span class="reply-card__username">@${escapeHtml(author.username)}</span>
+            </div>
+          </div>
+          <div class="reply-card__meta">
+            ${bestBadge}
+            <span class="reply-card__time">${timeAgo}</span>
+          </div>
+        </div>
+        <div class="reply-card__text">${escapeHtml(reply.text)}</div>
+        <div class="reply-card__footer">
+          <div class="reply-card__votes">
+            <button class="reply-card__vote-btn${didLike ? ' reply-card__vote-btn--active' : ''}" data-action="like" data-reply-id="${reply.id}" title="Helpful">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+              <span>${likeCount}</span>
+            </button>
+            <button class="reply-card__vote-btn${didDislike ? ' reply-card__vote-btn--active-down' : ''}" data-action="dislike" data-reply-id="${reply.id}" title="Not helpful">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+              <span>${dislikeCount}</span>
+            </button>
+          </div>
+          ${canMarkBest ? `<button class="reply-card__best-btn" data-action="best" data-reply-id="${reply.id}">Mark as Best Answer</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Wire vote buttons
+  containerEl.querySelectorAll('.reply-card__vote-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const replyId = btn.dataset.replyId;
+      const action = btn.dataset.action;
+      handleReplyVote(replyId, action, doubtId, containerEl);
+    });
+  });
+
+  // Wire best answer buttons
+  containerEl.querySelectorAll('.reply-card__best-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const replyId = btn.dataset.replyId;
+      handleMarkBestAnswer(replyId, doubtId, containerEl);
+    });
+  });
+}
+
+function handleReplyVote(replyId, action, doubtId, containerEl) {
+  const reply = action === 'like'
+    ? store.likeReply(replyId, currentUser.id)
+    : store.dislikeReply(replyId, currentUser.id);
+
+  if (!reply) return;
+
+  if (action === 'like') {
+    if (reply.likes.includes(currentUser.id)) {
+      // Just liked -> +2 points
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_liked',
+        doubtId,
+        replyId,
+      });
+
+      // Notify reply author
+      const doubt = store.getDoubtById(doubtId);
+      const notif = createNotification({
+        type: 'like',
+        fromUserId: currentUser.id,
+        doubtId,
+        message: `${currentUser.name} liked your reply on: "${doubt ? doubt.description.slice(0, 30) : ''}..."`,
+      });
+      store.addNotification(reply.authorId, notif);
+    } else {
+      // Unliked -> -1 or undo (+2 reverted by -1 / penalty)
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_disliked',
+        doubtId,
+        replyId,
+      });
+    }
+  } else if (action === 'dislike') {
+    if (reply.dislikes.includes(currentUser.id)) {
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_disliked',
+        doubtId,
+        replyId,
+      });
+    } else {
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_liked',
+        doubtId,
+        replyId,
+      });
+    }
+  }
+
+  updateNotifBadge();
+  renderReplies(doubtId, containerEl);
+}
+
+function handleMarkBestAnswer(replyId, doubtId, containerEl) {
+  store.markBestAnswer(replyId, doubtId);
+  store.updateDoubt(doubtId, {
+    status: 'resolved',
+    resolvedAt: Date.now(),
+  });
+
+  // Record best answer event (+15 points)
+  const reply = store.getReplies().find((r) => r.id === replyId);
+  if (reply) {
+    recordContributionEvent({
+      userId: reply.authorId,
+      action: 'best_answer',
+      doubtId,
+      replyId,
+    });
+
+    // Notify the helper
+    const doubt = store.getDoubtById(doubtId);
+    const notif = createNotification({
+      type: 'best_answer',
+      fromUserId: currentUser.id,
+      doubtId,
+      message: `${currentUser.name} marked your reply as the best answer on: "${doubt ? doubt.description.slice(0, 30) : ''}..."`,
+    });
+    store.addNotification(reply.authorId, notif);
+  }
+
+  updateNotifBadge();
+  renderMyDoubts();
+  refreshBubbles();
+  // Re-show detail with updated status
+  showDoubtDetail(doubtId);
+}
+
+function handlePostReply(doubtId, textInput, containerEl) {
+  const text = textInput.value.trim();
+  const validation = validateReply({ text });
+  if (!validation.valid) return;
+
+  const reply = createReply({
+    authorId: currentUser.id,
+    doubtId,
+    text,
+  });
+
+  store.addReply(reply);
+  textInput.value = '';
+
+  // Notify the doubt author
+  const doubt = store.getDoubtById(doubtId);
+  if (doubt && doubt.authorId !== currentUser.id) {
+    const notif = createNotification({
+      type: 'reply',
+      fromUserId: currentUser.id,
+      doubtId,
+      message: `${currentUser.name} replied to your doubt: "${doubt.description.slice(0, 30)}..."`,
+    });
+    store.addNotification(doubt.authorId, notif);
+    updateNotifBadge();
+  }
+
+  renderReplies(doubtId, containerEl);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -563,7 +822,8 @@ function handleRate(doubtId, rating) {
 // ═══════════════════════════════════════════════════════════════
 
 function openModal() {
-  modalOverlay.style.display = 'flex';
+  // Force reflow then add open class for animation
+  modalOverlay.classList.add('modal-overlay--open');
   modalErrors.innerHTML = '';
   selectedTags = [];
   selectedCategory = 'academic';
@@ -576,11 +836,11 @@ function openModal() {
 }
 
 function closeModal() {
+  modalOverlay.classList.remove('modal-overlay--open');
   modalOverlay.classList.add('modal-overlay--exit');
   setTimeout(() => {
-    modalOverlay.style.display = 'none';
     modalOverlay.classList.remove('modal-overlay--exit');
-  }, 250);
+  }, 280);
 }
 
 function renderModalTags() {
@@ -640,7 +900,6 @@ function handleSubmit() {
 
   closeModal();
   renderMyDoubts();
-  renderPool();
   refreshBubbles();
 }
 
@@ -668,7 +927,7 @@ function initModal() {
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modalOverlay.style.display === 'flex') {
+    if (e.key === 'Escape' && modalOverlay.classList.contains('modal-overlay--open')) {
       closeModal();
     }
   });
@@ -739,11 +998,11 @@ function initPoolSearch() {
     searchQuery = searchInput.value.toLowerCase().trim();
     const doubts = store.getDoubts();
     let poolDoubts = doubts.filter(
-      (d) => (d.status === 'open' || d.status === 'claimed') && d.authorId !== currentUser.id
+      (d) => d.status === 'open' || d.status === 'claimed'
     );
     // Apply pool filter
     if (activePoolFilter === 'eligible') {
-      poolDoubts = poolDoubts.filter((d) => matchScore(currentUser, d) > 0.2);
+      poolDoubts = poolDoubts.filter((d) => matchScore(d, currentUser) >= 0.6);
     } else if (activePoolFilter === 'campus') {
       poolDoubts = poolDoubts.filter((d) => {
         const author = store.getUserById(d.authorId);
@@ -819,13 +1078,17 @@ function renderNotifications() {
   listEl.innerHTML = notifications.slice(0, 20).map((n) => {
     const timeAgo = getTimeAgo(n.createdAt);
     const readClass = n.read ? '' : 'notif-item--unread';
-    const icon = n.type === 'claim' ? '🎯' : n.type === 'resolve' ? '✅' : n.type === 'rate' ? '⭐' : '🔔';
+    const iconMap = { claim: '🎯', resolve: '✅', rate: '⭐', like: '👍', reply: '💬', best_answer: '🏆' };
+    const icon = iconMap[n.type] || '🔔';
     return `
       <div class="notif-item ${readClass}" data-notif-id="${n.id}" data-doubt-id="${n.doubtId}">
         <span class="notif-item__icon">${icon}</span>
         <div class="notif-item__content">
           <div class="notif-item__text">${escapeHtml(n.message)}</div>
           <div class="notif-item__time">${timeAgo}</div>
+        </div>
+        <div class="notif-item__arrow" aria-label="Open">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
       </div>
     `;
@@ -852,6 +1115,12 @@ function initDetailPanel() {
     detailPanel.addEventListener('click', (e) => {
       if (e.target === detailPanel) hideDoubtDetail();
     });
+    // Also close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && detailPanel.classList.contains('detail-panel--open')) {
+        hideDoubtDetail();
+      }
+    });
   }
 }
 
@@ -867,11 +1136,10 @@ function init() {
   initDashboardBackground();
   renderSidebarAvatar();
   renderMyDoubts();
-  renderPool();
   initMyDoubtsTabs();
   initPoolTabs();
   initPoolSearch();
-  initBubblePoolCanvas();
+  initBubblePoolCanvas(); // internally calls refreshBubbles → renderPool → updateBubbles
   initModal();
   initDetailPanel();
   initNotifications();

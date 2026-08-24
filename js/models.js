@@ -38,6 +38,7 @@ export function createUser({ name, username, email, password, university, campus
     academicSkills: academicSkills || [],
     nonAcademicSkills: nonAcademicSkills || [],
     reputationScore: 50,
+    leaderboardPoints: 0,
     ratingHistory: [],
     notifications: [],
     createdAt: Date.now(),
@@ -124,6 +125,36 @@ export function validateDoubt({ category, tags, description, urgency }) {
   return { valid: errors.length === 0, errors };
 }
 
+// ── Reply ──
+
+/**
+ * Create a new Reply object.
+ * Replies are answers to doubts, posted by anyone who can see the doubt.
+ */
+export function createReply({ authorId, doubtId, text }) {
+  return {
+    id: generateId('r'),
+    authorId,
+    doubtId,
+    text: text.trim(),
+    likes: [],       // array of user IDs who liked
+    dislikes: [],    // array of user IDs who disliked
+    isBestAnswer: false,
+    createdAt: Date.now(),
+  };
+}
+
+/**
+ * Validate reply fields.
+ */
+export function validateReply({ text }) {
+  const errors = [];
+  if (!text || text.trim().length < 5) {
+    errors.push('Reply must be at least 5 characters.');
+  }
+  return { valid: errors.length === 0, errors };
+}
+
 // ── Notification ──
 
 /**
@@ -145,7 +176,46 @@ export function createNotification({ type, fromUserId, doubtId, message }) {
   };
 }
 
-// ── Reputation Scoring ──
+// ── Reputation Scoring & Events ──
+
+/**
+ * Score points matrix based on Studn't rules:
+ * - Claim doubt: +5
+ * - Resolve doubt: +10
+ * - Best answer: +15
+ * - 5★: +4, 4★: +3, 3★: +1, 2★: -1, 1★: -3
+ * - Reply liked: +2
+ * - Reply disliked: -1
+ */
+export const REPUTATION_RULES = {
+  CLAIM: 5,
+  RESOLVE: 10,
+  BEST_ANSWER: 15,
+  RATE_5: 4,
+  RATE_4: 3,
+  RATE_3: 1,
+  RATE_2: -1,
+  RATE_1: -3,
+  REPLY_LIKED: 2,
+  REPLY_DISLIKED: -1,
+};
+
+/**
+ * Create a new auditable Reputation/Contribution Event object.
+ */
+export function createReputationEvent({ userId, action, points, doubtId = null, replyId = null, rating = null, metadata = {} }) {
+  return {
+    id: generateId('evt'),
+    userId,
+    action,
+    points,
+    doubtId,
+    replyId,
+    rating,
+    metadata,
+    createdAt: Date.now(),
+  };
+}
 
 /**
  * Calculate reputation change for an action.
@@ -153,25 +223,33 @@ export function createNotification({ type, fromUserId, doubtId, message }) {
  */
 export function getRepDelta(action, rating = null) {
   switch (action) {
-    case 'claim': return 5;      // +5 for claiming a doubt
-    case 'resolve': return 10;   // +10 for resolving a doubt
-    case 'rate_5': return 4;     // +4 for getting 5-star
-    case 'rate_4': return 3;     // +3 for getting 4-star
-    case 'rate_3': return 1;     // +1 for getting 3-star
-    case 'rate_2': return -1;    // -1 for getting 2-star
-    case 'rate_1': return -3;    // -3 for getting 1-star
+    case 'claim': return REPUTATION_RULES.CLAIM;
+    case 'resolve': return REPUTATION_RULES.RESOLVE;
+    case 'rate_5': return REPUTATION_RULES.RATE_5;
+    case 'rate_4': return REPUTATION_RULES.RATE_4;
+    case 'rate_3': return REPUTATION_RULES.RATE_3;
+    case 'rate_2': return REPUTATION_RULES.RATE_2;
+    case 'rate_1': return REPUTATION_RULES.RATE_1;
+    case 'reply_liked': return REPUTATION_RULES.REPLY_LIKED;
+    case 'best_answer': return REPUTATION_RULES.BEST_ANSWER;
+    case 'reply_disliked': return REPUTATION_RULES.REPLY_DISLIKED;
     default: return 0;
   }
 }
 
 /**
- * Apply reputation change to a user.
+ * Apply reputation change to a user (clamps between 0 and 100).
  */
 export function applyRepChange(userId, action, rating = null) {
   const delta = getRepDelta(action, rating);
   const user = store.getUserById(userId);
   if (!user) return;
 
-  const newScore = Math.max(0, Math.min(100, (user.reputationScore || 50) + delta));
-  store.updateUser(userId, { reputationScore: newScore });
+  const newRep = Math.max(0, Math.min(100, (user.reputationScore !== undefined ? user.reputationScore : 50) + delta));
+  const newPoints = (user.leaderboardPoints || 0) + delta;
+  store.updateUser(userId, {
+    reputationScore: newRep,
+    leaderboardPoints: newPoints,
+  });
 }
+

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Log In — Studn't</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -23,11 +24,11 @@
     <div class="auth-glass-card">
 
       <div class="auth-header">
-        <a class="auth-back-btn" id="auth-back" href="index.html">
+        <a class="auth-back-btn" id="auth-back" href="index.html" data-transition>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           Back
         </a>
-        <a href="index.html" class="glow-mark" style="margin: 0 auto var(--space-4) auto;">
+        <a href="index.html" class="glow-mark" style="margin: 0 auto var(--space-4) auto;" data-transition>
           <span class="glow-mark__text">?</span>
         </a>
         <p class="auth-eyebrow">WELCOME BACK</p>
@@ -67,6 +68,7 @@
     </div>
   </main>
 
+  <script src="js/transitions.js"></script>
   <script type="module" src="js/pages/login.js"></script>
   <script type="module" src="js/cursor.js"></script>
 </body>
