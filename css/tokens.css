@@ -8,15 +8,15 @@
   /* ── Foundation ── */
   --bg-void: #080c14;
   --bg-raised: #0e1520;
-  --surface-glass: rgba(255, 255, 255, 0.035);
-  --surface-glass-hover: rgba(255, 255, 255, 0.06);
-  --border-glass: rgba(255, 255, 255, 0.07);
-  --border-glass-strong: rgba(255, 255, 255, 0.14);
+  --surface-glass: rgba(9, 17, 29, 0.82);
+  --surface-glass-hover: rgba(18, 48, 71, 0.72);
+  --border-glass: rgba(18, 48, 71, 0.9);
+  --border-glass-strong: rgba(0, 184, 230, 0.42);
 
   /* ── Glass Panel Extended ── */
   --glass-tint: rgba(20, 60, 120, 0.1);
-  --glass-highlight: rgba(255, 255, 255, 0.04);
-  --glass-border-shine: rgba(255, 255, 255, 0.12);
+  --glass-highlight: rgba(56, 189, 248, 0.06);
+  --glass-border-shine: rgba(0, 184, 230, 0.16);
   --glass-noise-opacity: 0.02;
 
   /* ── Blue Core Palette ── */
@@ -42,9 +42,9 @@
   --sphere-deep-blue: #0a1628;
 
   /* ── Text ── */
-  --text-primary: #e8ecf1;
-  --text-secondary: #8893a4;
-  --text-tertiary: #4e5a6b;
+  --text-primary: #e8eef5;
+  --text-secondary: #718096;
+  --text-tertiary: #4a5a6d;
 
   /* ── Status Colors ── */
   --accent-green: #34d399;
@@ -62,8 +62,8 @@
   --glow-danger: 0 0 20px rgba(248, 113, 113, 0.25);
 
   /* ── Gradients (subtle, structural only) ── */
-  --gradient-card: linear-gradient(165deg, rgba(15, 32, 53, 0.6), rgba(8, 12, 20, 0.8));
-  --gradient-sidebar: linear-gradient(180deg, rgba(10, 18, 32, 0.95), rgba(6, 10, 18, 0.98));
+  --gradient-card: linear-gradient(165deg, rgba(11, 20, 33, 0.84), rgba(5, 10, 18, 0.92));
+  --gradient-sidebar: linear-gradient(180deg, rgba(7, 13, 22, 0.96), rgba(5, 10, 18, 0.98));
   --gradient-metallic: linear-gradient(160deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 50%, rgba(255,255,255,0.04) 100%);
 
   /* ── Typography ── */

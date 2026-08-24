@@ -30,6 +30,9 @@
         <a class="sidebar__link" href="dashboard.html" title="Dashboard" data-transition>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         </a>
+        <a class="sidebar__link" href="leaderboard.html" title="Leaderboard" data-transition>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34"/><path d="M18 14.66V17c0 .55-.45 1-1 1h-2c-.55 0-1-.45-1-1v-2.34"/><path d="M6 9h12a2 2 0 0 1 2 2v1a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-1a2 2 0 0 1 2-2Z"/></svg>
+        </a>
         <a class="sidebar__link sidebar__link--active" href="profile.html" title="Profile" data-transition>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </a>
@@ -42,107 +45,160 @@
 
     <!-- Profile Content -->
     <main class="profile-main">
-      <!-- System header -->
+      <!-- Page header -->
       <div class="profile-header">
-        <div class="profile-header__system">SYSTEM: DOUBTS & REP TRACKER</div>
-        <div class="profile-header__title">STUDENT_TERMINAL_v2.6</div>
+        <div class="profile-header__system">&#10022; YOUR SPACE &#8212; YOUR LORE</div>
+        <div class="profile-header__title">Profile Grid</div>
       </div>
 
-      <div class="profile-grid">
+      <div class="profile-stack">
 
-        <!-- Top Left: Days Active -->
-        <div class="pcard pcard--days">
-          <div class="pcard__header">
-            <span class="pcard__label">DAYS ACTIVE</span>
-            <svg class="pcard__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <!-- ── Hero Card ── -->
+        <section class="pcard pcard--hero">
+          <div class="hero-globe" aria-hidden="true">
+            <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="0.6">
+              <circle cx="100" cy="100" r="90"/>
+              <circle cx="100" cy="100" r="70"/>
+              <circle cx="100" cy="100" r="45"/>
+              <ellipse cx="100" cy="100" rx="90" ry="35"/>
+              <ellipse cx="100" cy="100" rx="90" ry="65"/>
+              <ellipse cx="100" cy="100" rx="35" ry="90"/>
+              <ellipse cx="100" cy="100" rx="65" ry="90"/>
+              <line x1="10" y1="100" x2="190" y2="100"/>
+            </svg>
           </div>
-          <div class="pcard__big" id="stat-days">0</div>
-          <div class="pcard__sub">Streak maintained</div>
-        </div>
 
-        <!-- Center: Profile Photo -->
-        <div class="pcard pcard--photo" id="photo-card">
-          <div class="pcard__photo-area" id="profile-photo-area">
-            <div class="pcard__photo-placeholder" id="photo-placeholder">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <div class="hero-left">
+            <div class="hero-avatar" id="hero-avatar">
+              <div class="hero-avatar__frame">
+                <img id="avatar-img" alt="Avatar" hidden>
+                <div class="hero-avatar__fallback" id="photo-placeholder">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+              </div>
+              <label class="hero-avatar__edit" id="avatar-edit-label" for="avatar-upload" title="Change photo">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <input type="file" id="avatar-upload" accept="image/*" hidden>
+              </label>
             </div>
-            <label class="pcard__upload-btn" for="avatar-upload">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              <input type="file" id="avatar-upload" accept="image/*" style="display:none">
-            </label>
-          </div>
-          <div class="pcard__name-bar">
-            <div class="pcard__name-row">
-              <span class="pcard__name" id="profile-name">—</span>
-              <span class="pcard__badge">BETA_ACCESS</span>
+
+            <div class="hero-info">
+              <div class="hero-name-row">
+                <h1 class="hero-name" id="profile-name">—</h1>
+                <span class="hero-badge">BETA_ACCESS</span>
+              </div>
+              <div class="hero-username" id="profile-username">@—</div>
+              <p class="hero-bio" id="profile-bio">&gt;_ i code</p>
+              <div class="hero-meta">
+                <span class="hero-meta__item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                  <span id="meta-year">—</span>
+                </span>
+                <span class="hero-meta__divider"></span>
+                <span class="hero-meta__item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                  <span id="meta-branch">—</span>
+                </span>
+                <span class="hero-meta__divider"></span>
+                <span class="hero-meta__item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>
+                  <span id="meta-university">—</span>
+                </span>
+              </div>
             </div>
-            <div class="pcard__username" id="profile-username">@—</div>
-            <div class="pcard__bio" id="profile-bio">&gt;_ i code</div>
           </div>
-        </div>
 
-        <!-- Top Right: Reputation -->
-        <div class="pcard pcard--rep">
-          <div class="pcard__header">
-            <span class="pcard__label">REPUTATION</span>
-            <svg class="pcard__icon pcard__icon--orange" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <div class="hero-actions" id="hero-actions">
+            <button class="hero-btn" id="edit-profile-btn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              Edit
+            </button>
+            <div class="hero-menu-wrap">
+              <button class="hero-btn hero-btn--icon" id="hero-menu-btn" title="More">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+              </button>
+              <div class="hero-menu" id="hero-menu" hidden>
+                <button class="hero-menu__item" id="menu-change-photo">Change photo</button>
+                <button class="hero-menu__item hero-menu__item--danger" id="menu-logout">Log out</button>
+              </div>
+            </div>
           </div>
-          <div class="pcard__rep-row">
-            <span class="pcard__big pcard__big--orange" id="stat-rep">50</span>
-            <span class="pcard__rep-unit">REP</span>
-          </div>
-          <div class="pcard__badge pcard__badge--newcomer" id="rep-level">NEWCOMER</div>
-        </div>
+        </section>
 
-        <!-- Middle Left: Doubts Asked -->
-        <div class="pcard pcard--asked">
-          <div class="pcard__header">
-            <span class="pcard__label">DOUBTS ASKED</span>
-            <svg class="pcard__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <!-- ── Stats Row ── -->
+        <section class="stats-row">
+          <div class="pcard stat-card">
+            <div class="stat-card__icon stat-card__icon--green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="13" y2="13"/></svg>
+            </div>
+            <div class="stat-card__value" id="stat-asked">0</div>
+            <div class="stat-card__label">Doubts Asked</div>
           </div>
-          <div class="pcard__big" id="stat-asked">0</div>
-          <div class="pcard__sub">Open tickets resolved: <span id="stat-helped">0</span></div>
-        </div>
 
-        <!-- Middle Right: Skill Set -->
-        <div class="pcard pcard--skills">
-          <div class="pcard__header">
-            <span class="pcard__label">SKILL SET</span>
+          <div class="pcard stat-card">
+            <div class="stat-card__icon stat-card__icon--blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
+            <div class="stat-card__value" id="stat-solved">0</div>
+            <div class="stat-card__label">Doubts Solved</div>
           </div>
-          <div class="pcard__skill-tags" id="skill-tags"></div>
-        </div>
 
-        <!-- Bottom Left: Rep Progress -->
-        <div class="pcard pcard--repbar">
-          <div class="pcard__header">
-            <span class="pcard__label">REPUTATION LEVEL PROGRESS</span>
-            <span class="pcard__xp" id="profile-rep-value">50 / 100 XP</span>
+          <div class="pcard stat-card">
+            <div class="stat-card__icon stat-card__icon--purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></svg>
+            </div>
+            <div class="stat-card__value" id="stat-solutions">0</div>
+            <div class="stat-card__label">Solutions Given</div>
           </div>
-          <div class="pcard__bar-track">
-            <div class="pcard__bar-fill" id="profile-rep-fill" style="width: 50%"></div>
-          </div>
-          <div class="pcard__bar-labels">
-            <span>BEGINNER</span>
-            <span>NEWCOMER</span>
-            <span>LEGENDARY</span>
-          </div>
-        </div>
 
-        <!-- Bottom Center: Engagement -->
-        <div class="pcard pcard--engagement">
-          <div class="pcard__header">
-            <span class="pcard__label">ENGAGEMENT</span>
+          <div class="pcard stat-card">
+            <div class="stat-card__icon stat-card__icon--orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div class="stat-card__value stat-card__value--orange" id="stat-rep">50</div>
+            <div class="stat-card__label">Reputation</div>
           </div>
-          <div class="pcard__engagement-value" id="stat-engagement">0 this week</div>
-          <div class="pcard__sub">Telemetry signal active</div>
-          <div class="pcard__chart" id="engagement-chart"></div>
-        </div>
+        </section>
 
-        <!-- Bottom Right: User Details -->
-        <div class="pcard pcard--details">
-          <div class="pcard__header">
-            <span class="pcard__label">USER DETAILS TERMINAL</span>
+        <!-- ── Reputation Level + Badges ── -->
+        <section class="duo-row">
+          <div class="pcard pcard--rep-level">
+            <span class="pcard__label">REPUTATION LEVEL</span>
+            <div class="rep-level-row">
+              <span class="rep-level-badge" id="rep-level">NEWCOMER</span>
+              <span class="rep-xp" id="profile-rep-value">50 / 100 XP</span>
+            </div>
+            <div class="pcard__bar-track">
+              <div class="pcard__bar-fill" id="profile-rep-fill" style="width: 50%"></div>
+            </div>
+            <div class="rep-next" id="rep-next"></div>
           </div>
+
+          <div class="pcard pcard--badges">
+            <span class="pcard__label">BADGES</span>
+            <div class="badges-row" id="badges-row"></div>
+          </div>
+        </section>
+
+        <!-- ── Top Skills + Recent Activity ── -->
+        <section class="duo-row duo-row--bottom">
+          <div class="pcard pcard--skills">
+            <span class="pcard__label">TOP SKILLS</span>
+            <div class="skills-rings" id="skills-rings"></div>
+          </div>
+
+          <div class="pcard pcard--activity">
+            <div class="activity-head">
+              <span class="pcard__label">RECENT ACTIVITY</span>
+              <a class="activity-viewall" href="dashboard.html" data-transition>View All</a>
+            </div>
+            <div class="activity-list" id="activity-list"></div>
+          </div>
+        </section>
+
+        <!-- ── User Details Strip ── -->
+        <section class="pcard pcard--details">
+          <span class="pcard__label">USER DETAILS TERMINAL</span>
           <div class="pcard__detail-rows">
             <div class="pcard__detail-row">
               <span class="pcard__detail-label">Email</span>
@@ -169,10 +225,33 @@
               <span class="pcard__detail-value" id="profile-joined">—</span>
             </div>
           </div>
-        </div>
+        </section>
 
       </div>
     </main>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div class="edit-modal" id="edit-modal" hidden>
+    <div class="edit-modal__backdrop" id="edit-modal-backdrop"></div>
+    <div class="edit-modal__panel">
+      <div class="edit-modal__head">
+        <span class="pcard__label">EDIT PROFILE</span>
+        <button class="edit-modal__close" id="edit-modal-close" title="Close">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <label class="edit-modal__field">
+        <span>Name</span>
+        <input id="edit-name" type="text" maxlength="40" autocomplete="off">
+      </label>
+      <label class="edit-modal__field">
+        <span>Bio</span>
+        <textarea id="edit-bio" rows="3" maxlength="120" placeholder=">_ i code"></textarea>
+      </label>
+      <div class="edit-modal__error" id="edit-error"></div>
+      <button class="edit-modal__save" id="edit-save">Save Changes</button>
+    </div>
   </div>
 
   <script src="js/transitions.js"></script>

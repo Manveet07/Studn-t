@@ -40,11 +40,11 @@ function matchToColors(match) {
   const gr = Math.round(40 + match * 49);  // 40..89
   const gg = Math.round(100 + match * 89); // 100..189
   const gb = Math.round(160 + match * 88); // 160..248
-  const textAlpha = 0.4 + match * 0.6;
+  const textAlpha = 0.82 + match * 0.18;
   return {
     base: [r, g, b],
     glow: [gr, gg, gb],
-    text: `rgba(${Math.round(100 + match * 100)}, ${Math.round(160 + match * 80)}, 250, ${textAlpha})`,
+    text: `rgba(232, 238, 245, ${textAlpha})`,
     brightness,
   };
 }
@@ -551,7 +551,7 @@ function drawBubbles(time) {
       ctx.font = `600 ${Math.max(7, radius * 0.16)}px 'JetBrains Mono', monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = `rgba(${colors.glow.join(',')}, ${0.4 + colors.brightness * 0.4})`;
+      ctx.fillStyle = `rgba(${colors.glow.join(',')}, ${0.72 + colors.brightness * 0.28})`;
       ctx.fillText(tag.toUpperCase(), x, y - radius * 0.4, radius * 1.4);
     }
 

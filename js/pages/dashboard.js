@@ -7,7 +7,8 @@
    ============================================================ */
 
 import * as store from '../store.js';
-import { createDoubt, validateDoubt, createReply, validateReply, createNotification, applyRepChange } from '../models.js';
+import { createDoubt, validateDoubt, createReply, validateReply, createNotification } from '../models.js';
+import { recordContributionEvent } from '../services/leaderboardService.js';
 import { ACADEMIC_SKILLS, NONACADEMIC_CATEGORIES } from '../categories.js';
 import { matchScore } from '../algorithms/matchScore.js';
 import { priorityScore } from '../algorithms/priorityScore.js';
@@ -195,17 +196,34 @@ function initDashboardBackground() {
 // MY DOUBTS LIST
 // ═══════════════════════════════════════════════════════════════
 
+const MY_DOUBTS_EMPTY_COPY = {
+  active: '<strong>No doubts yet</strong><br>Hit the <strong>+</strong> button next to search to post your first doubt.',
+  claimed: '<strong>Nothing claimed yet</strong><br>Claim a doubt from the pool to help someone — it will show up here.',
+  solved: '<strong>No resolved doubts yet</strong><br>Doubts you have posted will land here once they are marked resolved.',
+};
+
 function renderMyDoubts() {
   if (!currentUser) return;
 
   const doubts = store.getDoubts();
   const filtered = doubts.filter((d) => {
     if (activeTab === 'active') {
+      // Doubts I posted that are still open or claimed
       return (d.status === 'open' || d.status === 'claimed') && d.authorId === currentUser.id;
+    } else if (activeTab === 'claimed') {
+      // Doubts claimed by me from others (not my own doubts)
+      return d.status === 'claimed' && d.claimedBy === currentUser.id;
     } else {
+      // solved tab: my resolved doubts
       return d.status === 'resolved' && d.authorId === currentUser.id;
     }
   });
+
+  // Update empty-state copy to match active tab
+  const emptyTextEl = document.getElementById('my-doubts-empty-text');
+  if (emptyTextEl) {
+    emptyTextEl.innerHTML = MY_DOUBTS_EMPTY_COPY[activeTab] || MY_DOUBTS_EMPTY_COPY.active;
+  }
 
   if (filtered.length === 0) {
     myDoubtsList.innerHTML = '';
@@ -271,11 +289,11 @@ function renderPool() {
     (d) => d.status === 'open' || d.status === 'claimed'
   );
 
-  // Apply filter
+  // Apply filter — matchScore(doubt, user) is the correct argument order
   if (activePoolFilter === 'eligible') {
     poolDoubts = poolDoubts.filter((d) => {
-      const match = matchScore(currentUser, d);
-      return match > 0.2;
+      const match = matchScore(d, currentUser);
+      return match >= 0.6;
     });
   } else if (activePoolFilter === 'campus') {
     poolDoubts = poolDoubts.filter((d) => {
@@ -329,7 +347,8 @@ function showDoubtDetail(doubtId) {
   const isAuthor = doubt.authorId === currentUser.id;
   const isClaimer = doubt.claimedBy === currentUser.id;
   const canClaim = doubt.status === 'open' && !isAuthor;
-  const canResolve = doubt.status === 'claimed' && isClaimer;
+  // Only the doubt's author can mark it resolved — the helper answered it, the poster closes it
+  const canResolve = doubt.status === 'claimed' && isAuthor;
   const canRate = doubt.status === 'resolved' && isAuthor && !doubt.ratingGiven;
 
   // Author info
@@ -496,8 +515,12 @@ function handleClaim(doubtId) {
     claimedAt: Date.now(),
   });
 
-  // Award rep for claiming
-  applyRepChange(currentUser.id, 'claim');
+  // Record claim contribution event (+5 points)
+  recordContributionEvent({
+    userId: currentUser.id,
+    action: 'claim',
+    doubtId,
+  });
 
   // Notify the author
   const doubt = store.getDoubtById(doubtId);
@@ -518,24 +541,31 @@ function handleClaim(doubtId) {
 }
 
 function handleResolve(doubtId) {
+  const doubt = store.getDoubtById(doubtId);
+  if (!doubt) return;
+
   store.updateDoubt(doubtId, {
     status: 'resolved',
     resolvedAt: Date.now(),
   });
 
-  // Award rep for resolving
-  applyRepChange(currentUser.id, 'resolve');
+  // The author closes the doubt, but reputation and the contribution event
+  // credit the helper who actually answered it (doubt.claimedBy)
+  if (doubt.claimedBy) {
+    recordContributionEvent({
+      userId: doubt.claimedBy,
+      action: 'resolve',
+      doubtId,
+    });
 
-  // Notify the author
-  const doubt = store.getDoubtById(doubtId);
-  if (doubt) {
+    // Notify the helper that their answer was accepted
     const notif = createNotification({
       type: 'resolve',
       fromUserId: currentUser.id,
       doubtId,
-      message: `${currentUser.name} resolved your doubt: "${doubt.description.slice(0, 40)}..."`,
+      message: `${currentUser.name} accepted your help and resolved: "${doubt.description.slice(0, 40)}..."`,
     });
-    store.addNotification(doubt.authorId, notif);
+    store.addNotification(doubt.claimedBy, notif);
   }
 
   hideDoubtDetail();
@@ -553,8 +583,13 @@ function handleRate(doubtId, rating) {
     ratingTimestamp: Date.now(),
   });
 
-  // Award rep to helper based on rating
-  applyRepChange(doubt.claimedBy, `rate_${rating}`);
+  // Record rating contribution event for the helper
+  recordContributionEvent({
+    userId: doubt.claimedBy,
+    action: `rate_${rating}`,
+    doubtId,
+    rating,
+  });
 
   // Add rating to helper's history
   const helper = store.getUserById(doubt.claimedBy);
@@ -667,14 +702,16 @@ function handleReplyVote(replyId, action, doubtId, containerEl) {
 
   if (!reply) return;
 
-  // Award/penalize rep to reply author
-  const prevLikes = action === 'like' ? (reply.likes || []).length : 0;
-  const prevDislikes = action === 'dislike' ? (reply.dislikes || []).length : 0;
-
   if (action === 'like') {
     if (reply.likes.includes(currentUser.id)) {
-      // Just liked → +2 rep
-      applyRepChange(reply.authorId, 'reply_liked');
+      // Just liked -> +2 points
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_liked',
+        doubtId,
+        replyId,
+      });
+
       // Notify reply author
       const doubt = store.getDoubtById(doubtId);
       const notif = createNotification({
@@ -685,14 +722,29 @@ function handleReplyVote(replyId, action, doubtId, containerEl) {
       });
       store.addNotification(reply.authorId, notif);
     } else {
-      // Unliked → -2 rep
-      applyRepChange(reply.authorId, 'reply_disliked');
+      // Unliked -> -1 or undo (+2 reverted by -1 / penalty)
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_disliked',
+        doubtId,
+        replyId,
+      });
     }
   } else if (action === 'dislike') {
     if (reply.dislikes.includes(currentUser.id)) {
-      applyRepChange(reply.authorId, 'reply_disliked');
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_disliked',
+        doubtId,
+        replyId,
+      });
     } else {
-      applyRepChange(reply.authorId, 'reply_liked'); // undo previous like
+      recordContributionEvent({
+        userId: reply.authorId,
+        action: 'reply_liked',
+        doubtId,
+        replyId,
+      });
     }
   }
 
@@ -707,10 +759,16 @@ function handleMarkBestAnswer(replyId, doubtId, containerEl) {
     resolvedAt: Date.now(),
   });
 
-  // Award best answer rep
+  // Record best answer event (+15 points)
   const reply = store.getReplies().find((r) => r.id === replyId);
   if (reply) {
-    applyRepChange(reply.authorId, 'best_answer');
+    recordContributionEvent({
+      userId: reply.authorId,
+      action: 'best_answer',
+      doubtId,
+      replyId,
+    });
+
     // Notify the helper
     const doubt = store.getDoubtById(doubtId);
     const notif = createNotification({
@@ -944,7 +1002,7 @@ function initPoolSearch() {
     );
     // Apply pool filter
     if (activePoolFilter === 'eligible') {
-      poolDoubts = poolDoubts.filter((d) => matchScore(currentUser, d) > 0.2);
+      poolDoubts = poolDoubts.filter((d) => matchScore(d, currentUser) >= 0.6);
     } else if (activePoolFilter === 'campus') {
       poolDoubts = poolDoubts.filter((d) => {
         const author = store.getUserById(d.authorId);
@@ -1028,6 +1086,9 @@ function renderNotifications() {
         <div class="notif-item__content">
           <div class="notif-item__text">${escapeHtml(n.message)}</div>
           <div class="notif-item__time">${timeAgo}</div>
+        </div>
+        <div class="notif-item__arrow" aria-label="Open">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
       </div>
     `;
