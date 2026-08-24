@@ -7,7 +7,7 @@
 
    Single source of truth for all ranking & score calculations.
    Competition ranking algorithm: 1, 2, 2, 4
-   Timeframe date filtering: all-time, weekly, monthly
+   Timeframe date filtering: all-time, daily, weekly, monthly
    Dependencies: store.js, models.js
    ============================================================ */
 
@@ -19,9 +19,11 @@ export const TIMEFRAMES = {
   ALL: 'all',
   MONTHLY: 'monthly',
   WEEKLY: 'weekly',
+  DAILY: 'daily',
 };
 
 const DURATION_MS = {
+  [TIMEFRAMES.DAILY]: 24 * 60 * 60 * 1000,
   [TIMEFRAMES.WEEKLY]: 7 * 24 * 60 * 60 * 1000,
   [TIMEFRAMES.MONTHLY]: 30 * 24 * 60 * 60 * 1000,
   [TIMEFRAMES.ALL]: Infinity,
@@ -145,7 +147,7 @@ export function assignCompetitionRanks(rankedUsers) {
  * Query the leaderboard.
  * 
  * @param {Object} options
- * @param {'all'|'weekly'|'monthly'} [options.timeframe='all']
+ * @param {'all'|'weekly'|'monthly'|'daily'} [options.timeframe='all']
  * @param {string} [options.campus] - Optional campus filter
  * @param {number} [options.limit=50] - Number of ranked entries to return
  * @returns {Object} Leaderboard payload
@@ -185,7 +187,7 @@ export function getLeaderboard({ timeframe = TIMEFRAMES.ALL, campus = null, limi
         contributionsCount = 0;
       }
     } else {
-      // For weekly / monthly: only events within the window count towards period points
+      // For daily / weekly / monthly: only events within the window count towards period points
       points = activity ? activity.points : 0;
       contributionsCount = activity ? activity.contributions : 0;
     }
