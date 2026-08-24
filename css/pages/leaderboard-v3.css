@@ -77,11 +77,12 @@
 
 .lb-topbar__title {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.5rem;
-  color: #f0f2f8;
+  color: var(--text-primary);
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
+  line-height: 1.25;
 }
 
 .lb-topbar__right {
@@ -630,7 +631,7 @@
 }
 
 .lb-list-card {
-  background: rgba(10, 12, 22, 0.75);
+  background: rgba(9, 17, 29, 0.86);
   border: 1px solid rgba(56, 189, 248, 0.14);
   border-radius: 18px;
   overflow: hidden;
@@ -646,7 +647,7 @@
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.05rem;
-  color: #f0f2f8;
+  color: var(--text-primary);
 }
 
 .lb-list-title__icon {
@@ -667,7 +668,7 @@
   grid-template-columns: 40px 72px minmax(160px, 1.4fr) minmax(100px, 1fr) 100px 110px 80px 110px;
   gap: 8px;
   padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(18, 48, 71, 0.22);
   border-bottom: 1px solid rgba(56, 189, 248, 0.16);
   font-family: var(--font-display);
   font-size: 0.72rem;
