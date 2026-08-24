@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stud-nt - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+  <!-- LEFT NAVIGATION SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M16 12l-4-4m4 4l-4 4m4-4H8"/>
+      </svg>
+      <span class="brand-title">Stud-nt</span>
+    </div>
+
+    <nav class="nav-menu">
+      <a href="#" class="nav-item active" id="navDashboard" >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item" id="navLeaderboard" >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15l-2 5l9-11h-7l2-5l-9 11h7z"/></svg>
+        Leaderboard
+      </a>
+      <a href="#" class="nav-item" id="navResponses" >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        My Responses
+      </a>
+      <a href="#" class="nav-item" id="navProfile" >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        My Profile
+      </a>
+      <a href="#" class="nav-item" id="btnOpenAskModal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ask Question
+      </a>
+      <a href="#" class="nav-item" id="btnLogout">
+        <span>↪</span> Logout
+      </a>
+    </nav>
+
+    <!-- LIVE ONLINE STATUS WIDGET -->
+    <div class="online-widget">
+      <div class="widget-title">
+        <span class="pulse-dot"></span> Live Platform Status
+      </div>
+      <div class="widget-stat">
+        <span class="stat-num" id="onlineCountDisplay">8</span>
+        <span class="stat-lbl">Users Currently Online</span>
+      </div>
+    </div>
+
+    <div class="footer-copy">© 2026 Stud-nt • Clear your doubts.</div>
+  </aside>
+
+  <!-- WORKSPACE LAYOUT WRAPPER -->
+  <div class="workspace-layout">
+    
+    <!-- VIEW 1: DASHBOARD / QUESTION QUEUE -->
+    <main class="main-wrapper view-page active-view" id="dashboardView">
+      
+      <!-- HEADER WITH TOP ACTIONS -->
+      <div class="top-bar">
+        <h2>Browse & Filter Queue</h2>
+        <div class="top-right-actions">
+          <div class="user-profile"  title="View My Profile">
+            <div class="avatar" id="globalAvatar">AR</div>
+            <div class="user-meta">
+              <span class="user-name" id="globalUserName">Alex Rivers</span>
+              <span class="user-rep">🏆 Rep: <strong id="globalRepScore">125</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXTENDED TAG BROWSER -->
+      <div class="tags-container">
+        <span class="tag-label">Filter Topic:</span>
+        <div class="tags-list" id="tagsList"></div>
+      </div>
+
+      <div class="action-header">
+        <h3 id="queueHeading">All Live Doubts</h3>
+        <button class="btn-primary" id="btnQuickAsk">➕ Ask a Question</button>
+      </div>
+
+      <!-- MAIN QUEUE TABLE -->
+      <div class="panel">
+        <div class="table-wrapper">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th># Rank</th>
+                <th>Question & Details</th>
+                <th>Priority</th>
+                <th>Views</th>
+                <th>Status / Responder</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="queueTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- VIEW 2: LEADERBOARD PAGE -->
+    <main class="main-wrapper view-page" id="leaderboardView" style="display: none;">
+      <div class="top-bar">
+        <h2>🏆 Community Leaderboard</h2>
+      </div>
+      <p class="section-subtext">Top peer tutors ranked by reputation earned from answering questions.</p>
+
+      <div class="panel" style="margin-top: 1rem;">
+        <table class="queue-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>User</th>
+              <th>Reputation</th>
+              <th>Upvotes</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardTableBody"></tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- VIEW 3: MY RESPONSES PAGE -->
+    <main class="main-wrapper view-page" id="responsesView" style="display: none;">
+      <div class="top-bar">
+        <h2>💬 My Responses</h2>
+      </div>
+      <p class="section-subtext">Questions where you provided an answer to assist other peers.</p>
+
+      <div class="panel" style="margin-top: 1rem;">
+        <table class="queue-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Question Title & Subject</th>
+              <th>My Submitted Answer</th>
+              <th>Upvotes Received</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="responsesTableBody"></tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- VIEW 4: DYNAMIC USER PROFILE PAGE -->
+    <main class="main-wrapper view-page" id="profileView" style="display: none;">
+      <div class="profile-top-nav">
+        <button class="btn-back" id="btnBackDashboard">← Back to Questions</button>
+      </div>
+
+      <div class="profile-header-card">
+        <div class="profile-avatar-large" id="profileAvatarIcon">👤</div>
+        <div class="profile-info-main">
+          <h1 id="profileName">User Name</h1>
+          <div class="profile-sub-meta">
+            <span>📅 Member for <strong id="profileMemberSince">Recently</strong></span>
+            <span>🕒 Last seen <strong id="profileLastSeen">just now</strong></span>
+          </div>
+          <p class="profile-bio-text" id="profileBioDisplay">No bio added yet.</p>
+
+          <button class="btn-secondary" id="btnEditBio" >✏️ Edit Bio</button>
+
+          <div id="bioEditForm" style="display: none; margin-top: 1rem;">
+            <textarea id="inputBio" rows="3" class="edit-bio-textarea"></textarea>
+            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+              <button class="btn-primary" id="btnSaveBio">Save Bio</button>
+              <button class="btn-secondary" id="btnCancelBio">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-grid">
+        <div class="profile-section">
+          <h3>Stats</h3>
+          <div class="stats-box">
+            <div class="stat-card">
+              <span class="stat-value" id="profileRepDisplay">0</span>
+              <span class="stat-label">Reputation</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="profileAnswersCount">0</span>
+              <span class="stat-label">Answers Given</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="profileQuestionsCount">0</span>
+              <span class="stat-label">Questions Asked</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="profileUpvotesReceived">0</span>
+              <span class="stat-label">Upvotes Received</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h3>Top Tags</h3>
+          <div class="top-tags-table" id="topTagsContainer"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- RIGHT SIDEBAR (MY DOUBTS WITH INSIDE HIDE TOGGLE ICON) -->
+    <aside class="right-sidebar" id="rightSidebar">
+      <div class="right-panel-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <h3>My Doubts</h3>
+          <span class="badge-count" id="myDoubtsCount">0</span>
+        </div>
+        <!-- Hide/Show Symbol Button Inside Panel -->
+        <button class="btn-panel-toggle" id="btnToggleDoubts" title="Hide/Show My Doubts">👁️</button>
+      </div>
+      <p class="right-panel-sub" id="myDoubtsSub">Track questions you asked and check for new replies.</p>
+      
+      <div class="my-doubts-list" id="myDoubtsList"></div>
+    </aside>
+
+  </div>
+
+  <!-- ASK QUESTION MODAL -->
+  <div class="modal-backdrop" id="askModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Ask a Question</h2>
+        <button class="btn-close" id="btnCloseAskModal">&times;</button>
+      </div>
+      <form id="askForm">
+        <div class="form-group">
+          <label>Question Title</label>
+          <input type="text" id="inputTitle" placeholder="e.g. How does B+ Tree insertion handle node splitting?" required>
+        </div>
+        <div class="form-group">
+          <label>Subject / Topic Tag</label>
+          <input type="text" id="inputSubject" placeholder="e.g. DBMS, DSA, JAVA, PYTHON" required>
+        </div>
+        <button type="submit" class="btn-submit">Post Question &gt;</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ANSWER / VIEW MODAL -->
+  <div class="modal-backdrop" id="answerModal">
+    <div class="modal-card wide">
+      <div class="modal-header">
+        <h2 id="modalQuestionTitle">Question Details</h2>
+        <button class="btn-close" id="btnCloseAnswerModal">&times;</button>
+      </div>
+      
+      <div id="modalQuestionMeta" class="modal-meta"></div>
+
+      <div class="answers-section">
+        <h3>Answers (<span id="answerCountDisplay">0</span>)</h3>
+        <div id="answersList" class="answers-list"></div>
+      </div>
+
+      <form id="answerForm" class="answer-form">
+        <h3>Submit Your Answer (+10 Rep Score)</h3>
+        <div class="form-group">
+          <textarea id="inputAnswerText" rows="4" placeholder="Type your detailed explanation here..." required></textarea>
+        </div>
+        <button type="submit" class="btn-submit">Submit Answer & Earn Rep &gt;</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
