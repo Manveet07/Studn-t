@@ -2,17 +2,23 @@
    priorityScore.js — Doubt Ranking Algorithm
    Pure function (no DOM). Copy-pasteable server-side unchanged.
 
-   Combines three factors into a single priority score:
-   1. Helper availability (reputation + active status)
-   2. Match strength (from matchScore.js)
-   3. Wait time (longer wait = higher priority to find a helper)
+   Combines FOUR factors into a single priority score:
+   1. Match strength     (from matchScore.js)       — 40%
+   2. Helper availability (reputation + activity)   — 25%
+   3. Urgency level      (from urgency.js)           — 20%
+   4. Wait time          (longer wait = higher rank) — 15%
+
+   Urgency is now a first-class ranking signal:
+   A Critical doubt ("Exam in 2h") outranks an identical
+   Low-urgency doubt, all else being equal.
 
    Tie-break: earlier createdAt wins.
 
-   Dependencies: matchScore.js (imported)
+   Dependencies: matchScore.js, urgency.js
    ============================================================ */
 
 import { matchScore } from './matchScore.js';
+import { urgencyToPriorityFactor } from '../urgency.js';
 
 /**
  * Rank candidate helpers for a given doubt.
@@ -22,32 +28,35 @@ import { matchScore } from './matchScore.js';
  * @param {Object[]} candidateUsers - array of user objects who could help
  * @param {number} now - current timestamp (Date.now())
  * @param {Object|null} [author=null] - optional doubt author object
- * @returns {Array<{ user: Object, score: number, match: number }>}
+ * @returns {Array<{ user: Object, score: number, match: number, urgencyFactor: number }>}
  */
 export function priorityScore(doubt, candidateUsers, now, author = null) {
   if (!doubt || !candidateUsers || candidateUsers.length === 0) return [];
 
   const waitMinutes = Math.max(0, (now - doubt.createdAt) / (1000 * 60));
+  const urgencyFactor = urgencyToPriorityFactor(doubt.urgency);
 
   const scored = candidateUsers
     .filter((user) => user.id !== doubt.authorId) // can't claim your own doubt
     .map((user) => {
-      const match = matchScore(doubt, user, author);
+      const match        = matchScore(doubt, user, author);
       const availability = availabilityScore(user, now);
-      const waitFactor = waitTimeFactor(waitMinutes);
+      const waitFactor   = waitTimeFactor(waitMinutes);
 
-      // Weighted combination
-      // match: 50%, availability: 30%, wait: 20%
-      const score = (match * 0.50) + (availability * 0.30) + (waitFactor * 0.20);
+      // Weighted combination:
+      // Match 40% + Availability 25% + Urgency 20% + Wait 15%
+      const score =
+        (match        * 0.40) +
+        (availability * 0.25) +
+        (urgencyFactor * 0.20) +
+        (waitFactor   * 0.15);
 
-      return { user, score, match, availability, waitFactor };
+      return { user, score, match, availability, urgencyFactor, waitFactor };
     })
     .filter((entry) => entry.match > 0.1) // minimum match threshold
     .sort((a, b) => {
-      // Primary: score descending
       if (b.score !== a.score) return b.score - a.score;
-      // Tie-break: earlier createdAt wins
-      return a.user.createdAt - b.user.createdAt;
+      return a.user.createdAt - b.user.createdAt; // tie-break: older user first
     });
 
   return scored;
@@ -70,11 +79,17 @@ export function singlePriorityScore(doubt, user, now, author = null) {
   const match = matchScore(doubt, user, author);
   if (match <= 0.1) return 0;
 
-  const availability = availabilityScore(user, now);
-  const waitMinutes = Math.max(0, (now - doubt.createdAt) / (1000 * 60));
-  const waitFactor = waitTimeFactor(waitMinutes);
+  const availability   = availabilityScore(user, now);
+  const waitMinutes    = Math.max(0, (now - doubt.createdAt) / (1000 * 60));
+  const waitFactor     = waitTimeFactor(waitMinutes);
+  const urgencyFactor  = urgencyToPriorityFactor(doubt.urgency);
 
-  return (match * 0.50) + (availability * 0.30) + (waitFactor * 0.20);
+  return (
+    (match        * 0.40) +
+    (availability * 0.25) +
+    (urgencyFactor * 0.20) +
+    (waitFactor   * 0.15)
+  );
 }
 
 // ── Sub-scores ──
@@ -97,7 +112,6 @@ function availabilityScore(user, now) {
   });
 
   const recencyBonus = recentHelp ? 0.1 : 0;
-
   return Math.min(1, repNormalized + recencyBonus);
 }
 
@@ -111,11 +125,8 @@ function availabilityScore(user, now) {
  * @returns 0..1
  */
 function waitTimeFactor(waitMinutes) {
-  // Rapid rise in first 30 minutes, plateaus after 60
   if (waitMinutes <= 0) return 0.1;
   if (waitMinutes >= 60) return 1;
-
-  // Smooth curve: 1 - e^(-k * t)
   const k = 0.04;
   return 0.1 + 0.9 * (1 - Math.exp(-k * waitMinutes));
 }

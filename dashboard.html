@@ -151,9 +151,28 @@
         </div>
         <div class="modal__field">
           <label class="modal__label">Urgency</label>
-          <div class="modal__urgency">
-            <input class="modal__urgency-slider" type="range" id="modal-urgency" min="0" max="100" value="50">
-            <div class="modal__urgency-value" id="modal-urgency-value">50</div>
+          <input type="hidden" id="modal-urgency" value="37">
+          <div class="urgency-picker" id="urgency-picker">
+            <button type="button" class="urgency-picker__card" data-level="critical" data-value="87">
+              <span class="urgency-picker__icon">🔴</span>
+              <span class="urgency-picker__label">Critical</span>
+              <span class="urgency-picker__tagline">Exam within 2 hours</span>
+            </button>
+            <button type="button" class="urgency-picker__card" data-level="high" data-value="62">
+              <span class="urgency-picker__icon">🟠</span>
+              <span class="urgency-picker__label">High</span>
+              <span class="urgency-picker__tagline">Exam today</span>
+            </button>
+            <button type="button" class="urgency-picker__card urgency-picker__card--active" data-level="normal" data-value="37">
+              <span class="urgency-picker__icon">🟡</span>
+              <span class="urgency-picker__label">Normal</span>
+              <span class="urgency-picker__tagline">Need help soon</span>
+            </button>
+            <button type="button" class="urgency-picker__card" data-level="low" data-value="12">
+              <span class="urgency-picker__icon">🟢</span>
+              <span class="urgency-picker__label">Low</span>
+              <span class="urgency-picker__tagline">Learning / curiosity</span>
+            </button>
           </div>
         </div>
       </div>

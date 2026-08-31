@@ -3,12 +3,14 @@
    Renders doubts as floating bubbles on a canvas.
    - Bubble size = urgency (bigger = more urgent)
    - Bubble color = match strength (bright blue = high, dim blue = low)
-   - Hover shows tooltip with tag, urgency, match %
+   - Hover shows tooltip with tag, urgency level, match %
    - Click a bubble to see doubt details
    - New doubts spawn with entrance animation
 
-   Dependencies: NONE (pure canvas rendering)
+   Dependencies: urgency.js
    ============================================================ */
+
+import { getUrgencyLevel } from './urgency.js';
 
 let canvas, ctx;
 let bubbles = [];
@@ -194,13 +196,13 @@ function showTooltip(bubble, clientX, clientY) {
   if (!tooltipEl) return;
 
   const matchPct = Math.round(bubble.match * 100);
-  const urgencyPct = bubble.urgency;
+  const urgLvl = getUrgencyLevel(bubble.urgency);
 
   tooltipEl.innerHTML = `
     <div style="font-weight:600; margin-bottom:4px; color:#60a5fa;">${escapeHtml(bubble.tag)}</div>
     <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:2px;">
       <span style="opacity:0.6;">Urgency</span>
-      <span style="font-weight:600; color:${urgencyPct > 70 ? '#f87171' : urgencyPct > 40 ? '#fbbf24' : '#34d399'}">${urgencyPct}%</span>
+      <span style="font-weight:600; color:${urgLvl.cssClass === 'critical' ? '#f87171' : urgLvl.cssClass === 'high' ? '#fb923c' : urgLvl.cssClass === 'normal' ? '#fbbf24' : '#34d399'}">${urgLvl.icon} ${urgLvl.label}</span>
     </div>
     <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:2px;">
       <span style="opacity:0.6;">Match</span>

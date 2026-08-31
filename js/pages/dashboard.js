@@ -12,6 +12,7 @@ import { recordContributionEvent } from '../services/leaderboardService.js';
 import { ACADEMIC_SKILLS, NONACADEMIC_CATEGORIES } from '../categories.js';
 import { matchScore, getMatchExplanation } from '../algorithms/matchScore.js';
 import { priorityScore } from '../algorithms/priorityScore.js';
+import { getUrgencyLevel } from '../urgency.js';
 import { initBubblePool, updateBubbles } from '../bubbles.js';
 
 // ── Auth Guard ──
@@ -39,8 +40,8 @@ const modalTags = document.getElementById('modal-tags');
 const modalErrors = document.getElementById('modal-errors');
 const modalDescription = document.getElementById('modal-description');
 const modalCourse = document.getElementById('modal-course');
-const modalUrgency = document.getElementById('modal-urgency');
-const modalUrgencyValue = document.getElementById('modal-urgency-value');
+const modalUrgency = document.getElementById('modal-urgency');       // hidden input
+const urgencyPickerEl = document.getElementById('urgency-picker');    // card grid
 const categoryTabs = document.querySelectorAll('.modal__category-tab');
 
 // Detail panel
@@ -348,6 +349,34 @@ function showDoubtDetail(doubtId) {
   const matchContainer = document.getElementById('detail-match-container') || detailPanel.querySelector('#detail-match-container');
   let matchExplanation = null;
 
+  // Build percentage breakdown rows HTML
+  function buildBreakdownHTML(exp) {
+    const bd = exp.breakdown;
+    const total = exp.percentage;
+    const rows = [
+      { icon: exp.reasons[0]?.icon || '🎯', label: exp.reasons[0]?.title || 'Skills',   pts: Math.round(bd.skillScore * 100) },
+      { icon: exp.reasons[1]?.icon || '🎓', label: exp.reasons[1]?.title || 'Campus',   pts: Math.round(bd.campusScore * 100) },
+      { icon: exp.reasons[2]?.icon || '📚', label: exp.reasons[2]?.title || 'Academic', pts: Math.round(bd.academicScore * 100) },
+      { icon: exp.reasons[3]?.icon || '⚡', label: exp.reasons[3]?.title || 'Activity', pts: Math.round(bd.activityScore * 100) },
+    ];
+    return rows.map((row) => {
+      const barWidth = Math.min(100, Math.round((row.pts / Math.max(total, 1)) * 100));
+      return `
+        <div class="match-bd__row">
+          <span class="match-bd__icon">${row.icon}</span>
+          <div class="match-bd__info">
+            <div class="match-bd__top">
+              <span class="match-bd__label">${escapeHtml(row.label)}</span>
+              <span class="match-bd__pts">${row.pts}%</span>
+            </div>
+            <div class="match-bd__bar-wrap">
+              <div class="match-bd__bar-fill" style="width:${barWidth}%"></div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
   if (matchContainer) {
     if (!isAuthor) {
       // Helper's perspective: show algorithmic match breakdown
@@ -369,19 +398,10 @@ function showDoubtDetail(doubtId) {
             <div class="match-card__bar-fill" id="match-bar-fill"></div>
           </div>
           <div class="match-card__title">
-            <span>🎯</span> WHY THIS IS A GOOD MATCH
+            <span>📊</span> SCORE BREAKDOWN
           </div>
-          <div class="match-card__list">
-            ${matchExplanation.reasons.map((r) => `
-              <div class="match-card__item">
-                <span class="match-card__item-icon">${r.icon}</span>
-                <div class="match-card__item-content">
-                  <div class="match-card__item-title">${escapeHtml(r.title)}</div>
-                  <div class="match-card__item-desc">${escapeHtml(r.description)}</div>
-                </div>
-                <span class="match-card__check">✓</span>
-              </div>
-            `).join('')}
+          <div class="match-bd">
+            ${buildBreakdownHTML(matchExplanation)}
           </div>
         </div>
       `;
@@ -401,19 +421,10 @@ function showDoubtDetail(doubtId) {
             <div class="match-card__bar-fill" id="match-bar-fill"></div>
           </div>
           <div class="match-card__title">
-            <span>🎯</span> HELPER MATCH BREAKDOWN
+            <span>📊</span> SCORE BREAKDOWN
           </div>
-          <div class="match-card__list">
-            ${matchExplanation.reasons.map((r) => `
-              <div class="match-card__item">
-                <span class="match-card__item-icon">${r.icon}</span>
-                <div class="match-card__item-content">
-                  <div class="match-card__item-title">${escapeHtml(r.title)}</div>
-                  <div class="match-card__item-desc">${escapeHtml(r.description)}</div>
-                </div>
-                <span class="match-card__check">✓</span>
-              </div>
-            `).join('')}
+          <div class="match-bd">
+            ${buildBreakdownHTML(matchExplanation)}
           </div>
         </div>
       `;
@@ -495,10 +506,8 @@ function showDoubtDetail(doubtId) {
     .map((t) => `<span class="detail-panel__tag">${escapeHtml(t)}</span>`)
     .join('');
 
-  // 3. Status & Urgency Calculation
-  const urgencyVal = typeof doubt.urgency === 'number' ? doubt.urgency : 50;
-  const urgencyClass = urgencyVal > 70 ? 'high' : (urgencyVal > 40 ? 'med' : 'low');
-  const urgencyIcon = urgencyVal > 70 ? '🔴' : (urgencyVal > 40 ? '🟡' : '🟢');
+  // 3. Status & Urgency
+  const urgencyLevel = getUrgencyLevel(typeof doubt.urgency === 'number' ? doubt.urgency : 37);
 
   const canClaim = doubt.status === 'open' && !isAuthor;
   const canResolve = doubt.status === 'claimed' && isAuthor;
@@ -597,17 +606,19 @@ function showDoubtDetail(doubtId) {
       ` : ''}
 
       <div class="detail-panel__section">
-        <div class="detail-panel__section-label">URGENCY METER</div>
-        <div class="urgency-meter">
+        <div class="detail-panel__section-label">URGENCY</div>
+        <div class="urgency-meter urgency-meter--${urgencyLevel.cssClass}">
           <div class="urgency-meter__top">
-            <span class="urgency-meter__badge urgency-meter__badge--${urgencyClass}">
-              ${urgencyIcon} URGENCY ${urgencyVal}%
+            <span class="urgency-meter__badge urgency-meter__badge--${urgencyLevel.cssClass}">
+              ${urgencyLevel.icon} ${urgencyLevel.label.toUpperCase()}
             </span>
             <span style="font-size: 0.72rem; color: #8a99ad;">Posted ${timeAgo}</span>
           </div>
+          <div class="urgency-meter__label">${escapeHtml(urgencyLevel.tagline)}</div>
           <div class="urgency-meter__bar-wrap">
-            <div class="urgency-meter__bar-fill urgency-meter__bar-fill--${urgencyClass}" style="width: ${urgencyVal}%"></div>
+            <div class="urgency-meter__bar-fill urgency-meter__bar-fill--${urgencyLevel.cssClass}" style="width: ${urgencyLevel.barPct}%"></div>
           </div>
+          <div class="urgency-meter__impact">${escapeHtml(urgencyLevel.impact)}</div>
         </div>
       </div>
 
@@ -999,8 +1010,13 @@ function openModal() {
   updateCategoryTabs();
   modalDescription.value = '';
   modalCourse.value = '';
-  modalUrgency.value = 50;
-  modalUrgencyValue.textContent = '50';
+  modalUrgency.value = 37;
+  // Reset picker to Normal
+  if (urgencyPickerEl) {
+    urgencyPickerEl.querySelectorAll('.urgency-picker__card').forEach((c) => {
+      c.classList.toggle('urgency-picker__card--active', c.dataset.level === 'normal');
+    });
+  }
 }
 
 function closeModal() {
@@ -1086,9 +1102,18 @@ function initModal() {
     });
   });
 
-  modalUrgency.addEventListener('input', () => {
-    modalUrgencyValue.textContent = modalUrgency.value;
-  });
+  // Wire urgency picker cards
+  if (urgencyPickerEl) {
+    urgencyPickerEl.querySelectorAll('.urgency-picker__card').forEach((card) => {
+      card.addEventListener('click', () => {
+        urgencyPickerEl.querySelectorAll('.urgency-picker__card').forEach((c) =>
+          c.classList.remove('urgency-picker__card--active')
+        );
+        card.classList.add('urgency-picker__card--active');
+        modalUrgency.value = card.dataset.value;
+      });
+    });
+  }
 
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) closeModal();
