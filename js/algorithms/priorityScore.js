@@ -21,9 +21,10 @@ import { matchScore } from './matchScore.js';
  * @param {Object} doubt - the doubt object
  * @param {Object[]} candidateUsers - array of user objects who could help
  * @param {number} now - current timestamp (Date.now())
+ * @param {Object|null} [author=null] - optional doubt author object
  * @returns {Array<{ user: Object, score: number, match: number }>}
  */
-export function priorityScore(doubt, candidateUsers, now) {
+export function priorityScore(doubt, candidateUsers, now, author = null) {
   if (!doubt || !candidateUsers || candidateUsers.length === 0) return [];
 
   const waitMinutes = Math.max(0, (now - doubt.createdAt) / (1000 * 60));
@@ -31,7 +32,7 @@ export function priorityScore(doubt, candidateUsers, now) {
   const scored = candidateUsers
     .filter((user) => user.id !== doubt.authorId) // can't claim your own doubt
     .map((user) => {
-      const match = matchScore(doubt, user);
+      const match = matchScore(doubt, user, author);
       const availability = availabilityScore(user, now);
       const waitFactor = waitTimeFactor(waitMinutes);
 
@@ -55,12 +56,18 @@ export function priorityScore(doubt, candidateUsers, now) {
 /**
  * Simple priority score for a single user-doubt pair.
  * Returns 0..1.
+ *
+ * @param {Object} doubt
+ * @param {Object} user
+ * @param {number} now
+ * @param {Object|null} [author=null]
+ * @returns {number}
  */
-export function singlePriorityScore(doubt, user, now) {
+export function singlePriorityScore(doubt, user, now, author = null) {
   if (!doubt || !user) return 0;
   if (user.id === doubt.authorId) return 0;
 
-  const match = matchScore(doubt, user);
+  const match = matchScore(doubt, user, author);
   if (match <= 0.1) return 0;
 
   const availability = availabilityScore(user, now);
