@@ -10,7 +10,7 @@ import * as store from '../store.js';
 import { createDoubt, validateDoubt, createReply, validateReply, createNotification } from '../models.js';
 import { recordContributionEvent } from '../services/leaderboardService.js';
 import { ACADEMIC_SKILLS, NONACADEMIC_CATEGORIES } from '../categories.js';
-import { matchScore } from '../algorithms/matchScore.js';
+import { matchScore, getMatchExplanation } from '../algorithms/matchScore.js';
 import { priorityScore } from '../algorithms/priorityScore.js';
 import { initBubblePool, updateBubbles } from '../bubbles.js';
 
@@ -48,11 +48,7 @@ const detailPanel = document.getElementById('bubble-detail');
 const detailClose = document.getElementById('detail-close');
 const detailCategory = document.getElementById('detail-category');
 const detailTitle = document.getElementById('detail-title');
-const detailUrgency = document.getElementById('detail-urgency');
-const detailTime = document.getElementById('detail-time');
 const detailTags = document.getElementById('detail-tags');
-const detailClaim = document.getElementById('detail-claim');
-const detailDismiss = document.getElementById('detail-dismiss');
 
 let selectedCategory = 'academic';
 let selectedTags = [];
@@ -289,21 +285,28 @@ function renderPool() {
     (d) => d.status === 'open' || d.status === 'claimed'
   );
 
-  // Apply filter — matchScore(doubt, user) is the correct argument order
+  // Apply filter — matchScore(doubt, user, author)
   if (activePoolFilter === 'eligible') {
     poolDoubts = poolDoubts.filter((d) => {
-      const match = matchScore(d, currentUser);
-      return match >= 0.6;
+      const author = store.getUserById(d.authorId);
+      const match = matchScore(d, currentUser, author);
+      return match >= 0.45;
     });
   } else if (activePoolFilter === 'campus') {
     poolDoubts = poolDoubts.filter((d) => {
       const author = store.getUserById(d.authorId);
-      return author && author.university === currentUser.university;
+      return author && (
+        (author.campus && currentUser.campus && author.campus.toLowerCase() === currentUser.campus.toLowerCase()) ||
+        (author.university && currentUser.university && author.university.toLowerCase() === currentUser.university.toLowerCase())
+      );
     });
   }
 
-  // Update bubbles with filtered doubts
-  updateBubbles(poolDoubts, currentUser, matchScore);
+  // Update bubbles with filtered doubts and author-aware matchScore
+  updateBubbles(poolDoubts, currentUser, (d, u) => {
+    const author = store.getUserById(d.authorId);
+    return matchScore(d, u, author);
+  });
 
   // Toggle empty state
   if (poolEmpty) {
@@ -333,21 +336,171 @@ function showDoubtDetail(doubtId) {
 
   const author = store.getUserById(doubt.authorId);
   const claimer = doubt.claimedBy ? store.getUserById(doubt.claimedBy) : null;
+  const isAuthor = doubt.authorId === currentUser.id;
+  const isClaimer = doubt.claimedBy === currentUser.id;
+  const timeAgo = getTimeAgo(doubt.createdAt);
 
+  // Top header: category & title
   detailCategory.textContent = doubt.category === 'academic' ? 'ACADEMIC' : 'NON-ACADEMIC';
   detailTitle.textContent = doubt.description;
-  detailUrgency.textContent = `${doubt.urgency}%`;
-  detailTime.textContent = getTimeAgo(doubt.createdAt);
 
+  // 1. "WHY THIS IS A GOOD MATCH" Card
+  const matchContainer = document.getElementById('detail-match-container') || detailPanel.querySelector('#detail-match-container');
+  let matchExplanation = null;
+
+  if (matchContainer) {
+    if (!isAuthor) {
+      // Helper's perspective: show algorithmic match breakdown
+      matchExplanation = getMatchExplanation(doubt, currentUser, author);
+      const badgeClass = matchExplanation.percentage >= 85
+        ? 'match-card__label-badge--excellent'
+        : (matchExplanation.percentage >= 70 ? 'match-card__label-badge--strong' : '');
+
+      matchContainer.innerHTML = `
+        <div class="match-card">
+          <div class="match-card__header">
+            <div class="match-card__score-wrap">
+              <span class="match-card__percentage">${matchExplanation.percentage}%</span>
+              <span class="match-card__match-tag">MATCH</span>
+            </div>
+            <span class="match-card__label-badge ${badgeClass}">${escapeHtml(matchExplanation.matchLabel)}</span>
+          </div>
+          <div class="match-card__bar-wrap">
+            <div class="match-card__bar-fill" id="match-bar-fill"></div>
+          </div>
+          <div class="match-card__title">
+            <span>🎯</span> WHY THIS IS A GOOD MATCH
+          </div>
+          <div class="match-card__list">
+            ${matchExplanation.reasons.map((r) => `
+              <div class="match-card__item">
+                <span class="match-card__item-icon">${r.icon}</span>
+                <div class="match-card__item-content">
+                  <div class="match-card__item-title">${escapeHtml(r.title)}</div>
+                  <div class="match-card__item-desc">${escapeHtml(r.description)}</div>
+                </div>
+                <span class="match-card__check">✓</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else if (isAuthor && claimer) {
+      // Author's perspective when doubt is claimed: show helper's compatibility
+      matchExplanation = getMatchExplanation(doubt, claimer, author);
+      matchContainer.innerHTML = `
+        <div class="match-card">
+          <div class="match-card__header">
+            <div class="match-card__score-wrap">
+              <span class="match-card__percentage">${matchExplanation.percentage}%</span>
+              <span class="match-card__match-tag">HELPER MATCH</span>
+            </div>
+            <span class="match-card__label-badge match-card__label-badge--excellent">${escapeHtml(matchExplanation.matchLabel)}</span>
+          </div>
+          <div class="match-card__bar-wrap">
+            <div class="match-card__bar-fill" id="match-bar-fill"></div>
+          </div>
+          <div class="match-card__title">
+            <span>🎯</span> HELPER MATCH BREAKDOWN
+          </div>
+          <div class="match-card__list">
+            ${matchExplanation.reasons.map((r) => `
+              <div class="match-card__item">
+                <span class="match-card__item-icon">${r.icon}</span>
+                <div class="match-card__item-content">
+                  <div class="match-card__item-title">${escapeHtml(r.title)}</div>
+                  <div class="match-card__item-desc">${escapeHtml(r.description)}</div>
+                </div>
+                <span class="match-card__check">✓</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else {
+      // Author's perspective when doubt is open: show target match criteria
+      const tagsList = (doubt.tags || []).join(', ') || (doubt.category === 'academic' ? 'Academic' : 'General');
+      const campusTarget = author?.campus || author?.university || currentUser.campus || currentUser.university || 'Campus Network';
+      const academicTarget = `${author?.branch || currentUser.branch || 'Course'} · ${author?.year || currentUser.year || ''} Year`.trim();
+
+      matchContainer.innerHTML = `
+        <div class="match-card">
+          <div class="match-card__header">
+            <div class="match-card__score-wrap">
+              <span class="match-card__percentage">ROUTING</span>
+              <span class="match-card__match-tag">ACTIVE ENGINE</span>
+            </div>
+            <span class="match-card__label-badge match-card__label-badge--target">TARGET CRITERIA</span>
+          </div>
+          <div class="match-card__bar-wrap">
+            <div class="match-card__bar-fill match-card__bar-fill--pulse"></div>
+          </div>
+          <div class="match-card__title">
+            <span>🎯</span> TARGET MATCH CRITERIA
+          </div>
+          <div class="match-card__list">
+            <div class="match-card__item">
+              <span class="match-card__item-icon">🎯</span>
+              <div class="match-card__item-content">
+                <div class="match-card__item-title">Target Skills: <strong>${escapeHtml(tagsList)}</strong></div>
+                <div class="match-card__item-desc">Matching helpers with declared expertise in these topics</div>
+              </div>
+              <span class="match-card__check">✓</span>
+            </div>
+            <div class="match-card__item">
+              <span class="match-card__item-icon">🎓</span>
+              <div class="match-card__item-content">
+                <div class="match-card__item-title">Campus Pool: <strong>${escapeHtml(campusTarget)}</strong></div>
+                <div class="match-card__item-desc">Prioritizing peer mentors from your institution</div>
+              </div>
+              <span class="match-card__check">✓</span>
+            </div>
+            <div class="match-card__item">
+              <span class="match-card__item-icon">📚</span>
+              <div class="match-card__item-content">
+                <div class="match-card__item-title">Academic Alignment: <strong>${escapeHtml(academicTarget)}</strong></div>
+                <div class="match-card__item-desc">Routing to peers and senior mentors in aligned coursework</div>
+              </div>
+              <span class="match-card__check">✓</span>
+            </div>
+            <div class="match-card__item">
+              <span class="match-card__item-icon">⚡</span>
+              <div class="match-card__item-content">
+                <div class="match-card__item-title">Urgency Priority: <strong>${doubt.urgency}%</strong></div>
+                <div class="match-card__item-desc">Floating prominently in the live doubt pool</div>
+              </div>
+              <span class="match-card__check">✓</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Animate progress bar fill
+    if (matchExplanation) {
+      const barFill = matchContainer.querySelector('#match-bar-fill');
+      if (barFill) {
+        barFill.style.width = '0%';
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            barFill.style.width = `${matchExplanation.percentage}%`;
+          }, 40);
+        });
+      }
+    }
+  }
+
+  // 2. Tags Pills
   detailTags.innerHTML = (doubt.tags || [])
     .map((t) => `<span class="detail-panel__tag">${escapeHtml(t)}</span>`)
     .join('');
 
-  // Build detail body
-  const isAuthor = doubt.authorId === currentUser.id;
-  const isClaimer = doubt.claimedBy === currentUser.id;
+  // 3. Status & Urgency Calculation
+  const urgencyVal = typeof doubt.urgency === 'number' ? doubt.urgency : 50;
+  const urgencyClass = urgencyVal > 70 ? 'high' : (urgencyVal > 40 ? 'med' : 'low');
+  const urgencyIcon = urgencyVal > 70 ? '🔴' : (urgencyVal > 40 ? '🟡' : '🟢');
+
   const canClaim = doubt.status === 'open' && !isAuthor;
-  // Only the doubt's author can mark it resolved — the helper answered it, the poster closes it
   const canResolve = doubt.status === 'claimed' && isAuthor;
   const canRate = doubt.status === 'resolved' && isAuthor && !doubt.ratingGiven;
 
@@ -359,7 +512,7 @@ function showDoubtDetail(doubtId) {
         <div class="detail-panel__person-avatar">${author.name.charAt(0).toUpperCase()}</div>
         <div class="detail-panel__person-info">
           <div class="detail-panel__person-name">${escapeHtml(author.name)}</div>
-          <div class="detail-panel__person-sub">@${escapeHtml(author.username)} · ${author.branch || ''}</div>
+          <div class="detail-panel__person-sub">@${escapeHtml(author.username)} · ${escapeHtml(author.branch || '')} ${author.year ? '· ' + escapeHtml(author.year) + ' Year' : ''}</div>
         </div>
       </div>
     `;
@@ -373,7 +526,7 @@ function showDoubtDetail(doubtId) {
         <div class="detail-panel__person-avatar detail-panel__person-avatar--helper">${claimer.name.charAt(0).toUpperCase()}</div>
         <div class="detail-panel__person-info">
           <div class="detail-panel__person-name">${escapeHtml(claimer.name)}</div>
-          <div class="detail-panel__person-sub">@${escapeHtml(claimer.username)} · ${claimer.branch || ''}</div>
+          <div class="detail-panel__person-sub">@${escapeHtml(claimer.username)} · ${escapeHtml(claimer.branch || '')}</div>
         </div>
       </div>
     `;
@@ -424,81 +577,96 @@ function showDoubtDetail(doubtId) {
   }
   actionsHtml += `<button class="detail-panel__btn detail-panel__btn--dismiss" id="detail-dismiss">Close</button>`;
 
-  // Assemble detail body
-  const bodyEl = detailPanel.querySelector('.detail-panel__inner');
-  const existingBody = bodyEl.querySelector('.detail-panel__body');
-  if (existingBody) existingBody.remove();
-
-  const body = document.createElement('div');
-  body.className = 'detail-panel__body';
-  body.innerHTML = `
-    <div class="detail-panel__section">
-      <div class="detail-panel__section-label">STATUS</div>
-      ${statusBadge}
-    </div>
-    <div class="detail-panel__section">
-      <div class="detail-panel__section-label">POSTED BY</div>
-      ${authorHtml}
-    </div>
-    ${claimerHtml ? `<div class="detail-panel__section"><div class="detail-panel__section-label">CLAIMED BY</div>${claimerHtml}</div>` : ''}
-    ${ratingHtml ? `<div class="detail-panel__section">${ratingHtml}</div>` : ''}
-    ${ratingFormHtml ? `<div class="detail-panel__section">${ratingFormHtml}</div>` : ''}
-    <div class="detail-panel__actions">
-      ${actionsHtml}
-    </div>
-    <div class="detail-panel__section">
-      <div class="detail-panel__section-label">REPLIES</div>
-      <div class="reply-thread" id="reply-thread"></div>
-      <div class="reply-input-wrap">
-        <textarea class="reply-input" id="reply-input" placeholder="Write a reply..." rows="2"></textarea>
-        <button class="reply-submit" id="reply-submit">Reply</button>
+  // Dynamic body container
+  const dynamicBody = document.getElementById('detail-dynamic-body') || detailPanel.querySelector('#detail-dynamic-body');
+  if (dynamicBody) {
+    dynamicBody.innerHTML = `
+      <div class="detail-panel__section">
+        <div class="detail-panel__section-label">STATUS & POSTED BY</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          ${authorHtml}
+          ${statusBadge}
+        </div>
       </div>
-    </div>
-  `;
 
-  // Insert before existing actions div
-  const existingActions = bodyEl.querySelector('.detail-panel__actions');
-  if (existingActions) existingActions.remove();
-  bodyEl.appendChild(body);
+      ${claimerHtml ? `
+        <div class="detail-panel__section">
+          <div class="detail-panel__section-label">CLAIMED BY</div>
+          ${claimerHtml}
+        </div>
+      ` : ''}
 
-  // Wire new action buttons
-  const newClaimBtn = body.querySelector('#detail-claim');
-  const newResolveBtn = body.querySelector('#detail-resolve');
-  const newDismissBtn = body.querySelector('#detail-dismiss');
-  const ratingStars = body.querySelector('#rating-stars');
+      <div class="detail-panel__section">
+        <div class="detail-panel__section-label">URGENCY METER</div>
+        <div class="urgency-meter">
+          <div class="urgency-meter__top">
+            <span class="urgency-meter__badge urgency-meter__badge--${urgencyClass}">
+              ${urgencyIcon} URGENCY ${urgencyVal}%
+            </span>
+            <span style="font-size: 0.72rem; color: #8a99ad;">Posted ${timeAgo}</span>
+          </div>
+          <div class="urgency-meter__bar-wrap">
+            <div class="urgency-meter__bar-fill urgency-meter__bar-fill--${urgencyClass}" style="width: ${urgencyVal}%"></div>
+          </div>
+        </div>
+      </div>
 
-  if (newClaimBtn) {
-    newClaimBtn.addEventListener('click', () => handleClaim(doubtId));
-  }
-  if (newResolveBtn) {
-    newResolveBtn.addEventListener('click', () => handleResolve(doubtId));
-  }
-  if (newDismissBtn) {
-    newDismissBtn.addEventListener('click', hideDoubtDetail);
-  }
-  if (ratingStars) {
-    ratingStars.querySelectorAll('.rating-star').forEach((star) => {
-      star.addEventListener('click', () => {
-        const rating = parseInt(star.dataset.rating, 10);
-        handleRate(doubtId, rating);
+      ${ratingHtml ? `<div class="detail-panel__section">${ratingHtml}</div>` : ''}
+      ${ratingFormHtml ? `<div class="detail-panel__section">${ratingFormHtml}</div>` : ''}
+
+      <div class="detail-panel__actions">
+        ${actionsHtml}
+      </div>
+
+      <div class="detail-panel__section" style="margin-top: var(--space-4);">
+        <div class="detail-panel__section-label">REPLIES</div>
+        <div class="reply-thread" id="reply-thread"></div>
+        <div class="reply-input-wrap">
+          <textarea class="reply-input" id="reply-input" placeholder="Write a reply..." rows="2"></textarea>
+          <button class="reply-submit" id="reply-submit">Reply</button>
+        </div>
+      </div>
+    `;
+
+    // Wire action buttons
+    const newClaimBtn = dynamicBody.querySelector('#detail-claim');
+    const newResolveBtn = dynamicBody.querySelector('#detail-resolve');
+    const newDismissBtn = dynamicBody.querySelector('#detail-dismiss');
+    const ratingStars = dynamicBody.querySelector('#rating-stars');
+
+    if (newClaimBtn) {
+      newClaimBtn.addEventListener('click', () => handleClaim(doubtId));
+    }
+    if (newResolveBtn) {
+      newResolveBtn.addEventListener('click', () => handleResolve(doubtId));
+    }
+    if (newDismissBtn) {
+      newDismissBtn.addEventListener('click', hideDoubtDetail);
+    }
+    if (ratingStars) {
+      ratingStars.querySelectorAll('.rating-star').forEach((star) => {
+        star.addEventListener('click', () => {
+          const rating = parseInt(star.dataset.rating, 10);
+          handleRate(doubtId, rating);
+        });
       });
-    });
-  }
+    }
 
-  // Wire reply input
-  const replyInput = body.querySelector('#reply-input');
-  const replySubmit = body.querySelector('#reply-submit');
-  const replyThread = body.querySelector('#reply-thread');
+    // Wire reply input
+    const replyInput = dynamicBody.querySelector('#reply-input');
+    const replySubmit = dynamicBody.querySelector('#reply-submit');
+    const replyThread = dynamicBody.querySelector('#reply-thread');
 
-  if (replySubmit && replyInput && replyThread) {
-    replySubmit.addEventListener('click', () => handlePostReply(doubtId, replyInput, replyThread));
-    replyInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handlePostReply(doubtId, replyInput, replyThread);
-      }
-    });
-    renderReplies(doubtId, replyThread);
+    if (replySubmit && replyInput && replyThread) {
+      replySubmit.addEventListener('click', () => handlePostReply(doubtId, replyInput, replyThread));
+      replyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handlePostReply(doubtId, replyInput, replyThread);
+        }
+      });
+      renderReplies(doubtId, replyThread);
+    }
   }
 
   detailPanel.classList.add('detail-panel--open');
