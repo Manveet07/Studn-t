@@ -441,13 +441,13 @@ function showDoubtDetail(doubtId) {
               <span class="match-card__percentage">ROUTING</span>
               <span class="match-card__match-tag">ACTIVE ENGINE</span>
             </div>
-            <span class="match-card__label-badge match-card__label-badge--target">TARGET CRITERIA</span>
+            <span class="match-card__label-badge match-card__label-badge--scanning">SCANNING</span>
           </div>
           <div class="match-card__bar-wrap">
             <div class="match-card__bar-fill match-card__bar-fill--pulse"></div>
           </div>
           <div class="match-card__title">
-            <span>🎯</span> TARGET MATCH CRITERIA
+            <span>🔄</span> SEARCHING FOR MATCHES
           </div>
           <div class="match-card__list">
             <div class="match-card__item">
@@ -456,7 +456,7 @@ function showDoubtDetail(doubtId) {
                 <div class="match-card__item-title">Target Skills: <strong>${escapeHtml(tagsList)}</strong></div>
                 <div class="match-card__item-desc">Matching helpers with declared expertise in these topics</div>
               </div>
-              <span class="match-card__check">✓</span>
+              <span class="match-card__check match-card__check--scanning">⏳</span>
             </div>
             <div class="match-card__item">
               <span class="match-card__item-icon">🎓</span>
@@ -464,7 +464,7 @@ function showDoubtDetail(doubtId) {
                 <div class="match-card__item-title">Campus Pool: <strong>${escapeHtml(campusTarget)}</strong></div>
                 <div class="match-card__item-desc">Prioritizing peer mentors from your institution</div>
               </div>
-              <span class="match-card__check">✓</span>
+              <span class="match-card__check match-card__check--scanning">⏳</span>
             </div>
             <div class="match-card__item">
               <span class="match-card__item-icon">📚</span>
@@ -472,7 +472,7 @@ function showDoubtDetail(doubtId) {
                 <div class="match-card__item-title">Academic Alignment: <strong>${escapeHtml(academicTarget)}</strong></div>
                 <div class="match-card__item-desc">Routing to peers and senior mentors in aligned coursework</div>
               </div>
-              <span class="match-card__check">✓</span>
+              <span class="match-card__check match-card__check--scanning">⏳</span>
             </div>
             <div class="match-card__item">
               <span class="match-card__item-icon">⚡</span>
@@ -480,9 +480,10 @@ function showDoubtDetail(doubtId) {
                 <div class="match-card__item-title">Urgency Priority: <strong>${doubt.urgency}%</strong></div>
                 <div class="match-card__item-desc">Floating prominently in the live doubt pool</div>
               </div>
-              <span class="match-card__check">✓</span>
+              <span class="match-card__check match-card__check--scanning">⏳</span>
             </div>
           </div>
+          <div class="match-card__scan-msg">Looking for the best helpers matching your criteria...</div>
         </div>
       `;
     }
@@ -801,75 +802,150 @@ function renderReplies(doubtId, containerEl) {
   const replies = store.getRepliesByDoubt(doubtId);
   const doubt = store.getDoubtById(doubtId);
   if (!doubt || !containerEl) return;
-
   const isAuthor = doubt.authorId === currentUser.id;
   const isResolved = doubt.status === 'resolved';
-
   if (replies.length === 0) {
     containerEl.innerHTML = '<div class="reply-empty">No replies yet. Be the first to help!</div>';
     return;
   }
+  const authorMap = {};
+  replies.forEach((reply) => {
+    if (!authorMap[reply.authorId]) authorMap[reply.authorId] = [];
+    authorMap[reply.authorId].push(reply);
+  });
+  const grouped = [];
+  Object.keys(authorMap).forEach((authorId) => {
+    const authorReplies = authorMap[authorId].sort((a, b) => a.createdAt - b.createdAt);
+    grouped.push({ authorId, mainReply: authorReplies[0], followUps: authorReplies.slice(1) });
+  });
+  let groupIdx = 0;
 
-  containerEl.innerHTML = replies.map((reply) => {
-    const author = store.getUserById(reply.authorId);
+  function buildVotes(r) {
+    const lc = (r.likes || []).length;
+    const dc = (r.dislikes || []).length;
+    const dl = (r.likes || []).includes(currentUser.id);
+    const dd = (r.dislikes || []).includes(currentUser.id);
+    return '<div class="reply-card__votes">'
+      + '<button class="reply-card__vote-btn' + (dl ? ' reply-card__vote-btn--active' : '') + '" data-action="like" data-reply-id="' + r.id + '" title="Helpful">'
+      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>'
+      + '<span>' + lc + '</span></button>'
+      + '<button class="reply-card__vote-btn' + (dd ? ' reply-card__vote-btn--active-down' : '') + '" data-action="dislike" data-reply-id="' + r.id + '" title="Not helpful">'
+      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>'
+      + '<span>' + dc + '</span></button></div>';
+  }
+
+  function buildActionRow(r, canMarkBest) {
+    return buildVotes(r)
+      + '<button class="reply-card__reply-btn" data-reply-to="' + r.id + '">Reply</button>'
+      + (canMarkBest ? '<button class="reply-card__best-btn" data-action="best" data-reply-id="' + r.id + '">Mark as Best Answer</button>' : '');
+  }
+
+  function buildInlineReplyInput(pid) {
+    return '<div class="reply-card__inline-reply" id="inline-reply-' + pid + '" style="display:none">'
+      + '<input class="reply-card__inline-input" type="text" placeholder="Write a reply..." data-parent="' + pid + '" />'
+      + '<button class="reply-card__inline-submit" data-parent="' + pid + '">Reply</button>'
+      + '</div>';
+  }
+
+  containerEl.innerHTML = grouped.map((group) => {
+    const author = store.getUserById(group.authorId);
     if (!author) return '';
+    const r = group.mainReply;
+    const bestClass = r.isBestAnswer ? ' reply-card--best' : '';
+    const bestBadge = r.isBestAnswer ? '<span class="reply-card__best-badge">✓ BEST ANSWER</span>' : '';
+    const canMarkBest = isAuthor && !isResolved && !r.isBestAnswer && r.authorId !== currentUser.id;
+    const timeAgo = getTimeAgo(r.createdAt);
+    const fuCount = group.followUps.length;
+    const gid = 'group-' + (groupIdx++);
 
-    const likeCount = (reply.likes || []).length;
-    const dislikeCount = (reply.dislikes || []).length;
-    const didLike = (reply.likes || []).includes(currentUser.id);
-    const didDislike = (reply.dislikes || []).includes(currentUser.id);
-    const bestClass = reply.isBestAnswer ? ' reply-card--best' : '';
-    const bestBadge = reply.isBestAnswer ? '<span class="reply-card__best-badge">✓ BEST ANSWER</span>' : '';
-    const canMarkBest = isAuthor && !isResolved && !reply.isBestAnswer && reply.authorId !== currentUser.id;
-    const timeAgo = getTimeAgo(reply.createdAt);
+    const followUpsHtml = group.followUps.map((fu) => {
+      const fc = fu.isBestAnswer ? ' reply-card--best' : '';
+      const fb = fu.isBestAnswer ? '<span class="reply-card__best-badge">✓ BEST ANSWER</span>' : '';
+      const fm = isAuthor && !isResolved && !fu.isBestAnswer && fu.authorId !== currentUser.id;
+      return '<div class="reply-card reply-card--followup' + fc + '" data-reply-id="' + fu.id + '">'
+        + '<div class="reply-card__header"><div class="reply-card__author">'
+        + '<span class="reply-card__name">' + escapeHtml(author.name) + '</span>'
+        + '<span class="reply-card__username">@' + escapeHtml(author.username) + '</span>'
+        + '</div><div class="reply-card__meta">' + fb
+        + '<span class="reply-card__time">' + getTimeAgo(fu.createdAt) + '</span></div></div>'
+        + '<div class="reply-card__text">' + escapeHtml(fu.text) + '</div>'
+        + '<div class="reply-card__footer">' + buildActionRow(fu, fm) + '</div>'
+        + buildInlineReplyInput(fu.id) + '</div>';
+    }).join('');
 
-    return `
-      <div class="reply-card${bestClass}" data-reply-id="${reply.id}">
-        <div class="reply-card__header">
-          <div class="reply-card__author">
-            <div class="reply-card__avatar">${author.name.charAt(0).toUpperCase()}</div>
-            <div class="reply-card__author-info">
-              <span class="reply-card__name">${escapeHtml(author.name)}</span>
-              <span class="reply-card__username">@${escapeHtml(author.username)}</span>
-            </div>
-          </div>
-          <div class="reply-card__meta">
-            ${bestBadge}
-            <span class="reply-card__time">${timeAgo}</span>
-          </div>
-        </div>
-        <div class="reply-card__text">${escapeHtml(reply.text)}</div>
-        <div class="reply-card__footer">
-          <div class="reply-card__votes">
-            <button class="reply-card__vote-btn${didLike ? ' reply-card__vote-btn--active' : ''}" data-action="like" data-reply-id="${reply.id}" title="Helpful">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
-              <span>${likeCount}</span>
-            </button>
-            <button class="reply-card__vote-btn${didDislike ? ' reply-card__vote-btn--active-down' : ''}" data-action="dislike" data-reply-id="${reply.id}" title="Not helpful">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
-              <span>${dislikeCount}</span>
-            </button>
-          </div>
-          ${canMarkBest ? `<button class="reply-card__best-btn" data-action="best" data-reply-id="${reply.id}">Mark as Best Answer</button>` : ''}
-        </div>
-      </div>
-    `;
+    let toggleHtml = '';
+    if (fuCount > 0) {
+      toggleHtml = '<div class="reply-group__toggle" data-target="' + gid + '">'
+        + '<svg class="reply-group__toggle-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>'
+        + '<span>' + fuCount + ' ' + (fuCount === 1 ? 'reply' : 'replies') + '</span></div>';
+    }
+
+    return '<div class="reply-group">'
+      + '<div class="reply-card' + bestClass + '" data-reply-id="' + r.id + '">'
+      + '<div class="reply-card__header"><div class="reply-card__author">'
+      + '<div class="reply-card__avatar">' + author.name.charAt(0).toUpperCase() + '</div>'
+      + '<div class="reply-card__author-info">'
+      + '<span class="reply-card__name">' + escapeHtml(author.name) + '</span>'
+      + '<span class="reply-card__username">@' + escapeHtml(author.username) + '</span>'
+      + '</div></div><div class="reply-card__meta">' + bestBadge
+      + '<span class="reply-card__time">' + timeAgo + '</span></div></div>'
+      + '<div class="reply-card__text">' + escapeHtml(r.text) + '</div>'
+      + '<div class="reply-card__footer">' + buildActionRow(r, canMarkBest) + '</div>'
+      + buildInlineReplyInput(r.id) + '</div>'
+      + toggleHtml
+      + (followUpsHtml ? '<div class="reply-group__followups" id="' + gid + '">' + followUpsHtml + '</div>' : '')
+      + '</div>';
   }).join('');
 
   // Wire vote buttons
   containerEl.querySelectorAll('.reply-card__vote-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const replyId = btn.dataset.replyId;
-      const action = btn.dataset.action;
-      handleReplyVote(replyId, action, doubtId, containerEl);
-    });
+    btn.addEventListener('click', () => handleReplyVote(btn.dataset.replyId, btn.dataset.action, doubtId, containerEl));
   });
-
   // Wire best answer buttons
   containerEl.querySelectorAll('.reply-card__best-btn').forEach((btn) => {
+    btn.addEventListener('click', () => handleMarkBestAnswer(btn.dataset.replyId, doubtId, containerEl));
+  });
+  // Wire toggle buttons
+  containerEl.querySelectorAll('.reply-group__toggle').forEach((toggle) => {
+    toggle.addEventListener('click', () => {
+      const target = document.getElementById(toggle.dataset.target);
+      if (!target) return;
+      const isHidden = target.style.display === 'none';
+      target.style.display = isHidden ? '' : 'none';
+      toggle.classList.toggle('reply-group__toggle--open', isHidden);
+    });
+  });
+  // Wire Reply buttons
+  containerEl.querySelectorAll('.reply-card__reply-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const replyId = btn.dataset.replyId;
-      handleMarkBestAnswer(replyId, doubtId, containerEl);
+      const replyId = btn.dataset.replyTo;
+      const input = containerEl.querySelector('#inline-reply-' + replyId);
+      if (!input) return;
+      containerEl.querySelectorAll('.reply-card__inline-reply').forEach((el) => {
+        if (el.id !== 'inline-reply-' + replyId) el.style.display = 'none';
+      });
+      const isVisible = input.style.display !== 'none';
+      input.style.display = isVisible ? 'none' : 'flex';
+      if (!isVisible) input.querySelector('input').focus();
+    });
+  });
+  // Wire inline reply submit
+  containerEl.querySelectorAll('.reply-card__inline-submit').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const pid = btn.dataset.parent;
+      const inp = containerEl.querySelector('.reply-card__inline-input[data-parent="' + pid + '"]');
+      if (!inp || !inp.value.trim()) return;
+      handlePostReply(doubtId, inp, containerEl, inp.value.trim());
+    });
+  });
+  // Wire inline reply enter key
+  containerEl.querySelectorAll('.reply-card__inline-input').forEach((inp) => {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const btn = containerEl.querySelector('.reply-card__inline-submit[data-parent="' + inp.dataset.parent + '"]');
+        if (btn) btn.click();
+      }
     });
   });
 }

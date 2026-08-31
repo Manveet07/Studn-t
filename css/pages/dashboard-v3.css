@@ -1317,6 +1317,18 @@
   color: #e9d5ff;
 }
 
+.match-card__label-badge--scanning {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: rgba(168, 85, 247, 0.5);
+  color: #d8b4fe;
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
 /* ── Progress Bar ── */
 .match-card__bar-wrap {
   width: 100%;
@@ -1417,12 +1429,31 @@
   line-height: 1.35;
 }
 
+.match-card__scan-msg {
+  font-size: 0.72rem;
+  color: #a78bfa;
+  text-align: center;
+  margin-top: 12px;
+  font-style: italic;
+  opacity: 0.8;
+}
+
 .match-card__check {
   font-size: 0.75rem;
   font-weight: 700;
   color: #34d399;
   flex-shrink: 0;
   padding-top: 1px;
+}
+
+.match-card__check--scanning {
+  color: #a78bfa;
+  animation: check-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes check-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 
 /* ── Score Breakdown Rows ── */
@@ -1817,6 +1848,149 @@
 .reply-card--best {
   border-color: rgba(52, 211, 153, 0.3);
   background: rgba(52, 211, 153, 0.04);
+}
+
+/* ── Reply Group (YouTube-style) ── */
+.reply-group {
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.reply-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.reply-group__followups {
+  margin-left: 34px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(56, 189, 248, 0.15);
+  margin-top: var(--space-1);
+}
+
+.reply-card--followup {
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-1);
+}
+
+.reply-card--followup:last-child {
+  margin-bottom: 0;
+}
+
+.reply-card--followup .reply-card__header {
+  margin-bottom: var(--space-1);
+}
+
+.reply-card--followup .reply-card__author {
+  gap: var(--space-1);
+}
+
+.reply-card--followup .reply-card__text {
+  font-size: 0.78rem;
+  margin-bottom: var(--space-1);
+}
+
+
+/* ── Reply Group Toggle (YouTube '2 replies' style) ── */
+.reply-group__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  margin-top: 6px;
+  margin-left: 34px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.06);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.reply-group__toggle:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+.reply-group__toggle-icon {
+  transition: transform 0.2s ease;
+}
+
+.reply-group__toggle--open .reply-group__toggle-icon {
+  transform: rotate(180deg);
+}
+
+/* ── Reply Button (YouTube-style) ── */
+.reply-card__reply-btn {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  padding: 4px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+  margin-left: auto;
+}
+
+.reply-card__reply-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Inline Reply Input ── */
+.reply-card__inline-reply {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 0 34px;
+}
+
+.reply-card__inline-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-family: var(--font-body);
+  outline: none;
+}
+
+.reply-card__inline-input:focus {
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.reply-card__inline-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.reply-card__inline-submit {
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: var(--blue-500);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.reply-card__inline-submit:hover {
+  background: var(--blue-400);
+}
+
+.reply-card--followup .reply-card__footer {
+  padding-top: var(--space-1);
 }
 
 .reply-card__header {
