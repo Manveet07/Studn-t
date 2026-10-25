@@ -7,6 +7,7 @@
    ============================================================ */
 
 import * as store from '../store.js';
+import { api } from '../api.js';
 import { createDoubt, validateDoubt, createReply, validateReply, createNotification } from '../models.js';
 import { recordContributionEvent } from '../services/leaderboardService.js';
 import { ACADEMIC_SKILLS, NONACADEMIC_CATEGORIES } from '../categories.js';
@@ -688,7 +689,14 @@ function hideDoubtDetail() {
   detailPanel.classList.remove('detail-panel--open');
 }
 
-function handleClaim(doubtId) {
+async function handleClaim(doubtId) {
+  try {
+    await api.claimDoubt(doubtId);
+  } catch (error) {
+    console.error(error);
+    window.alert(error.message);
+    return;
+  }
   store.updateDoubt(doubtId, {
     status: 'claimed',
     claimedBy: currentUser.id,
@@ -720,7 +728,14 @@ function handleClaim(doubtId) {
   updateNotifBadge();
 }
 
-function handleResolve(doubtId) {
+async function handleResolve(doubtId) {
+  try {
+    await api.resolveDoubt(doubtId);
+  } catch (error) {
+    console.error(error);
+    window.alert(error.message);
+    return;
+  }
   const doubt = store.getDoubtById(doubtId);
   if (!doubt) return;
 
@@ -754,9 +769,10 @@ function handleResolve(doubtId) {
   updateNotifBadge();
 }
 
-function handleRate(doubtId, rating) {
+async function handleRate(doubtId, rating) {
   const doubt = store.getDoubtById(doubtId);
   if (!doubt || !doubt.claimedBy) return;
+  try { await api.rateHelper(doubtId, rating); } catch (error) { window.alert(error.message); return; }
 
   store.updateDoubt(doubtId, {
     ratingGiven: rating,
@@ -950,12 +966,24 @@ function renderReplies(doubtId, containerEl) {
   });
 }
 
-function handleReplyVote(replyId, action, doubtId, containerEl) {
-  const reply = action === 'like'
-    ? store.likeReply(replyId, currentUser.id)
-    : store.dislikeReply(replyId, currentUser.id);
-
-  if (!reply) return;
+async function handleReplyVote(replyId, action, doubtId, containerEl) {
+  let remote;
+  try {
+    const result = await api.voteReply(replyId, action);
+    remote = result.reply;
+  } catch (error) {
+    window.alert(error.message);
+    return;
+  }
+  const cached = store.getReplies().find((item) => String(item.id) === String(replyId));
+  if (cached) {
+    store.updateReply(replyId, {
+      likes: (remote.likes || []).map((id) => String(id._id || id)),
+      dislikes: (remote.dislikes || []).map((id) => String(id._id || id))
+    });
+  }
+  const reply = store.getReplies().find((item) => String(item.id) === String(replyId)) || cached;
+  if (!reply) { renderReplies(doubtId, containerEl); return; }
 
   if (action === 'like') {
     if (reply.likes.includes(currentUser.id)) {
@@ -1007,7 +1035,8 @@ function handleReplyVote(replyId, action, doubtId, containerEl) {
   renderReplies(doubtId, containerEl);
 }
 
-function handleMarkBestAnswer(replyId, doubtId, containerEl) {
+async function handleMarkBestAnswer(replyId, doubtId, containerEl) {
+  try { await api.markBestAnswer(replyId); } catch (error) { window.alert(error.message); return; }
   store.markBestAnswer(replyId, doubtId);
   store.updateDoubt(doubtId, {
     status: 'resolved',
@@ -1042,7 +1071,7 @@ function handleMarkBestAnswer(replyId, doubtId, containerEl) {
   showDoubtDetail(doubtId);
 }
 
-function handlePostReply(doubtId, textInput, containerEl) {
+async function handlePostReply(doubtId, textInput, containerEl) {
   const text = textInput.value.trim();
   const validation = validateReply({ text });
   if (!validation.valid) return;
@@ -1053,6 +1082,13 @@ function handlePostReply(doubtId, textInput, containerEl) {
     text,
   });
 
+  try {
+    const remote = await api.addReply(doubtId, text);
+    if (remote.reply && (remote.reply.id || remote.reply._id)) reply.id = remote.reply.id || remote.reply._id;
+  } catch (error) {
+    window.alert(error.message);
+    return;
+  }
   store.addReply(reply);
   textInput.value = '';
 
@@ -1133,7 +1169,7 @@ function updateCategoryTabs() {
   });
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   const description = modalDescription.value.trim();
   const courseContext = modalCourse.value.trim();
   const urgency = parseInt(modalUrgency.value, 10);
@@ -1156,7 +1192,28 @@ function handleSubmit() {
   }
 
   const doubt = createDoubt(doubtData);
-  store.addDoubt(doubt);
+  try {
+    const response = await api.createDoubt({
+      title: `${courseContext ? `${courseContext}: ` : ''}${description.slice(0, 140)}`.slice(0, 180),
+      description,
+      course: courseContext,
+      category: selectedCategory,
+      tags: selectedTags,
+      urgency: urgency >= 75 ? 'critical' : urgency >= 50 ? 'high' : urgency >= 25 ? 'medium' : 'low'
+    });
+    const saved = response.doubt;
+    doubt.id = saved.id || saved._id;
+    doubt.status = saved.status || 'open';
+    doubt.createdAt = new Date(saved.createdAt).getTime();
+    store.addDoubt(doubt);
+  } catch (error) {
+    modalErrors.innerHTML = '';
+    const p = document.createElement('p');
+    p.className = 'modal__error';
+    p.textContent = error.message;
+    modalErrors.appendChild(p);
+    return;
+  }
 
   closeModal();
   renderMyDoubts();
@@ -1404,6 +1461,25 @@ function init() {
 
   initDashboardBackground();
   renderSidebarAvatar();
+  // Pull persistent doubts from MongoDB through the Express API.
+  api.getDoubts().then(({ doubts = [] }) => {
+    const mapped = doubts.map((d) => ({
+      id: d.id || d._id,
+      authorId: d.author && (d.author.id || d.author._id) ? (d.author.id || d.author._id) : d.author,
+      category: d.category || 'academic',
+      tags: d.tags || [],
+      courseContext: d.course || '',
+      description: d.description || d.title || '',
+      urgency: ({ low: 15, medium: 40, high: 70, critical: 95 })[d.urgency] || 40,
+      status: d.status || 'open',
+      claimedBy: d.claimedBy && (d.claimedBy.id || d.claimedBy._id) ? (d.claimedBy.id || d.claimedBy._id) : d.claimedBy,
+      createdAt: new Date(d.createdAt || Date.now()).getTime(),
+      claimedAt: null, resolvedAt: null, ratingGiven: null, ratingTimestamp: null
+    }));
+    store.setDoubts(mapped);
+    renderMyDoubts();
+    refreshBubbles();
+  }).catch((error) => console.error('Could not load doubts from API:', error));
   renderMyDoubts();
   initMyDoubtsTabs();
   initPoolTabs();

@@ -6,6 +6,7 @@
    ============================================================ */
 
 import * as store from '../store.js';
+import { api, setToken } from '../api.js';
 import { showLoadingScreen } from '../loading.js';
 
 const loginForm = document.getElementById('login-form');
@@ -144,7 +145,7 @@ function initPasswordToggle() {
 // LOGIN HANDLER
 // ═══════════════════════════════════════════════════════════════
 
-function handleLogin(e) {
+async function handleLogin(e) {
   e.preventDefault();
   errorsEl.innerHTML = '';
 
@@ -160,13 +161,20 @@ function handleLogin(e) {
     return;
   }
 
-  const result = store.loginUser(identifier, password);
-  if (!result.success) {
-    errorsEl.innerHTML = `<p class="pd-error">${result.error}</p>`;
-    return;
+  try {
+    const result = await api.login(identifier, password);
+    setToken(result.token);
+    const existingUsers = store.getUsers().filter((u) => u.id !== result.user.id);
+    store.setUsers([...existingUsers, result.user]);
+    store.setCurrentUserId(result.user.id);
+    showLoadingScreen(result.user.name, 'dashboard.html', 2200);
+  } catch (error) {
+    errorsEl.textContent = '';
+    const message = document.createElement('p');
+    message.className = 'pd-error';
+    message.textContent = error.message;
+    errorsEl.appendChild(message);
   }
-
-  showLoadingScreen(result.user.name, 'dashboard.html', 2200);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -174,7 +182,7 @@ function handleLogin(e) {
 // ═══════════════════════════════════════════════════════════════
 
 function renderPastProfiles() {
-  const profiles = store.getPastProfiles();
+  const profiles = []; // Accounts are authenticated by the API; old local-only profiles are not valid API accounts.
   if (profiles.length === 0) {
     pastProfilesSection.style.display = 'none';
     return;

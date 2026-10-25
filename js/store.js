@@ -8,6 +8,8 @@
    Dependencies: NONE
    ============================================================ */
 
+import { setToken, api } from './api.js';
+
 const STORAGE_KEYS = {
   USERS: 'pd_users',
   CURRENT_USER: 'pd_currentUserId',
@@ -110,6 +112,7 @@ export function usernameExists(username) {
 
 export function logout() {
   localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+  setToken(null);
 }
 
 // ── Auth ──
@@ -150,6 +153,17 @@ export function getUnreadCount(userId) {
 }
 
 export function addNotification(userId, notification) {
+  // Persist notification to MongoDB when the recipient is a real API user.
+  // Do not block the existing UI cache while the request completes.
+  if (notification && notification.message && userId && !notification._fromServer) {
+    api.createNotification({
+      recipientId: userId,
+      type: notification.type || 'general',
+      message: notification.message,
+      relatedDoubt: notification.doubtId || null,
+      link: notification.doubtId ? `dashboard.html?doubt=${encodeURIComponent(notification.doubtId)}` : ''
+    }).catch((error) => console.warn('Could not persist notification:', error.message));
+  }
   const users = getUsers();
   const idx = users.findIndex((u) => u.id === userId);
   if (idx === -1) return;
@@ -163,6 +177,7 @@ export function addNotification(userId, notification) {
 }
 
 export function markNotificationRead(userId, notificationId) {
+  api.markNotificationRead(notificationId).catch((error) => console.warn('Could not mark notification read:', error.message));
   const users = getUsers();
   const idx = users.findIndex((u) => u.id === userId);
   if (idx === -1) return;
@@ -172,6 +187,7 @@ export function markNotificationRead(userId, notificationId) {
 }
 
 export function markAllNotificationsRead(userId) {
+  api.markAllNotificationsRead().catch((error) => console.warn('Could not mark notifications read:', error.message));
   const users = getUsers();
   const idx = users.findIndex((u) => u.id === userId);
   if (idx === -1) return;

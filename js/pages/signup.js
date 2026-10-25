@@ -8,6 +8,7 @@
    ============================================================ */
 
 import * as store from '../store.js';
+import { api, setToken } from '../api.js';
 import { createUser, validateUser } from '../models.js';
 import { ACADEMIC_SKILLS, NONACADEMIC_CATEGORIES } from '../categories.js';
 import { initAnimatedCheckboxes, createCheckbox, getCheckedValues } from '../ui/animatedCheckbox.js';
@@ -263,7 +264,7 @@ function validateStep(step) {
 
     if (!name || name.trim().length < 2) errors.push('Name must be at least 2 characters.');
     if (!username || username.trim().length < 3) errors.push('Username must be at least 3 characters.');
-    if (username && store.usernameExists(username)) errors.push('This username is already taken.');
+
     if (!email || email.trim().length < 5) errors.push('Please enter a valid email address.');
     if (email && !email.includes('@')) errors.push('Email must contain @');
   }
@@ -303,7 +304,7 @@ function showErrors(errors) {
 }
 
 // ── Create Account ──
-function createAccount() {
+async function createAccount() {
   const name = document.getElementById('su-name').value;
   const username = document.getElementById('su-username').value;
   const email = document.getElementById('su-email').value;
@@ -338,10 +339,20 @@ function createAccount() {
     return false;
   }
 
-  store.addUser(user);
-  store.setCurrentUserId(user.id);
-
-  return true;
+  try {
+    const result = await api.register({
+      name, username, email, password, university, campus,
+      year: selectedYear, branch, bio, academicSkills, nonAcademicSkills
+    });
+    setToken(result.token);
+    // Keep a minimal compatibility cache for the existing dashboard modules.
+    store.addUser(result.user);
+    store.setCurrentUserId(result.user.id);
+    return true;
+  } catch (error) {
+    showErrors([error.message]);
+    return false;
+  }
 }
 
 // ── Next Button Handler ──
@@ -355,7 +366,7 @@ function handleNext() {
   if (currentStep < totalSteps) {
     goToStep(currentStep + 1);
   } else {
-    const success = createAccount();
+    createAccount().then((success) => {
     if (success) {
       steps.forEach((s) => s.classList.remove('auth-step--active'));
       const successStep = document.querySelector('[data-step="success"]');
@@ -367,6 +378,7 @@ function handleNext() {
       progressSteps.forEach((ps) => ps.classList.add('auth-progress__step--done'));
       if (stepCounter) stepCounter.textContent = 'All done!';
     }
+    });
   }
 }
 
