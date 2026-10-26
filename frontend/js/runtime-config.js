@@ -4,5 +4,5 @@
  * with https://YOUR-SERVICE.onrender.com/api (keep the /api suffix).
  */
 window.STUDNT_CONFIG = Object.freeze({
-  API_BASE_URL: 'http://localhost:5000/api'
+  API_BASE_URL: 'https://studnt-backend.onrender.com/api'
 });
