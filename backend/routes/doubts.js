@@ -1,0 +1,13 @@
+const express = require('express');
+const requireAuth = require('../middleware/auth');
+const controller = require('../controllers/doubtController');
+const router = express.Router();
+router.get('/', controller.list);
+router.post('/', requireAuth, controller.create);
+router.get('/:id', controller.getById);
+router.patch('/:id', requireAuth, controller.update);
+router.post('/:id/claim', requireAuth, controller.claim);
+router.post('/:id/replies', requireAuth, controller.addReply);
+router.post('/:id/resolve', requireAuth, controller.resolve);
+router.post('/:id/rating', requireAuth, controller.rateHelper);
+module.exports = router;
