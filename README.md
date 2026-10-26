@@ -3,8 +3,8 @@
 > **Help that floats to the right people.**  
 > Post a doubt, get matched by skill, and help others in return. No more shouting into the void — your question finds the one person who knows.
 
-[![Phase](https://img.shields.io/badge/Phase-1%20%E2%80%94%20Vanilla%20JS-blue)](#tech-stack)
-[![Storage](https://img.shields.io/badge/Storage-LocalStorage-informational)](#tech-stack)
+[![Phase](https://img.shields.io/badge/Phase-2%20%E2%80%94%20Express%20%2B%20MongoDB-blue)](#tech-stack)
+[![Storage](https://img.shields.io/badge/Storage-MongoDB%20Atlas-informational)](#tech-stack)
 [![License](https://img.shields.io/badge/License-MIT-green)](#)
 
 ---
@@ -12,29 +12,29 @@
 ## Screenshots
 
 ### Landing Page
-![Landing](assets/screenshots/landing.png)
+![Landing](frontend/assets/screenshots/landing.png)
 
 ### Dashboard — Live Doubt Pool
-![Dashboard](assets/screenshots/dashboard.png)
+![Dashboard](frontend/assets/screenshots/dashboard.png)
 > Doubts float as bubbles — bigger means higher urgency, brighter glow means stronger skill match with you.
 
 ### Post a Doubt
-![Post Doubt](assets/screenshots/post-doubt.png)
+![Post Doubt](frontend/assets/screenshots/post-doubt.png)
 
 ### Notifications
-![Notifications](assets/screenshots/notifications.png)
+![Notifications](frontend/assets/screenshots/notifications.png)
 
 ### Profile
-![Profile](assets/screenshots/profile.png)
+![Profile](frontend/assets/screenshots/profile.png)
 
 ### Leaderboard
-![Leaderboard](assets/screenshots/leaderboard.png)
+![Leaderboard](frontend/assets/screenshots/leaderboard.png)
 
 ### Sign Up
-![Signup](assets/screenshots/signup.png)
+![Signup](frontend/assets/screenshots/signup.png)
 
 ### Login
-![Login](assets/screenshots/login.png)
+![Login](frontend/assets/screenshots/login.png)
 
 ---
 
@@ -113,80 +113,175 @@ newRep = decayFactor × previousRep + (1 − decayFactor) × avgOfRecentRatings
 | Layer | Tech |
 |---|---|
 | UI | Vanilla HTML / CSS / JavaScript (ES6 modules) |
-| Data | `localStorage` only — no server, no database |
+| Backend | Node.js + Express REST API (`backend/`) |
+| Database | MongoDB Atlas with Mongoose |
+| Auth | bcrypt password hashing + JWT bearer tokens |
+| API client | [`frontend/js/api.js`](frontend/js/api.js) — native `fetch()` wrapper |
 | Canvas | `<canvas>` API — bubble physics + background animations |
 | Routing | Multi-page HTML — no SPA framework |
-| Build | None — open `index.html` directly |
+| Build | None — frontend is static, backend runs `node server.js` |
 
-**Dependency rule:** `store.js` is the only file that touches `localStorage`. Every other module reads/writes through it. This makes the Phase 2 migration a one-file change.
+**Dependency rule:** [`frontend/js/api.js`](frontend/js/api.js) is the only module that calls the backend, and `store.js` is the only module that touches `localStorage`. Every other module goes through one of those two.
 
 ---
 
-## File Structure
+## Project Structure
 
 ```
 /
-├── index.html             Landing page
-├── signup.html            Multi-step skill questionnaire
-├── login.html             User picker (Phase 1 — no real auth yet)
-├── dashboard.html         Main app — bubble pool + my doubts
-├── profile.html           Own profile + public view (?id=xxx)
-├── leaderboard.html       Reputation rankings
+├── frontend/                    Static site — HTML, CSS, JS
+│   ├── index.html               Landing page
+│   ├── signup.html              Multi-step skill questionnaire
+│   ├── login.html               Login (JWT)
+│   ├── dashboard.html           Main app — bubble pool + my doubts
+│   ├── profile.html             Own profile + public view (?id=xxx)
+│   ├── leaderboard.html         Reputation rankings
+│   ├── assets/screenshots/      Product screenshots
+│   ├── css/                     Design tokens, base, components, per-page
+│   └── js/
+│       ├── api.js               fetch() client — attaches JWT, the only file that talks to the API
+│       ├── runtime-config.js    API_BASE_URL — change this when deploying
+│       ├── store.js             localStorage abstraction (legacy client state)
+│       ├── models.js            User/Doubt factory functions + validation
+│       ├── categories.js        Fixed category taxonomy — single source of truth
+│       ├── urgency.js           Urgency levels + priority factor
+│       ├── bubbles.js           Canvas bubble physics + rendering
+│       ├── cursor.js            Custom cursor + magnetic buttons
+│       ├── loading.js           Animated loading screen
+│       ├── transitions.js       Page transition system
+│       ├── sphere-bg.js         Background 3D sphere animation
+│       ├── algorithms/
+│       │   ├── matchScore.js        Pure — doubt ↔ user skill fit
+│       │   ├── priorityScore.js     Pure — doubt ranking in the pool
+│       │   └── reputationScore.js    Pure — decay-weighted reputation
+│       ├── services/
+│       │   └── leaderboardService.js
+│       └── pages/               landing, signup, login, dashboard, profile, leaderboard
 │
-├── css/
-│   ├── tokens.css         Design system tokens
-│   ├── base.css           Resets + typography
-│   ├── components.css     Buttons, cards, toasts
-│   └── pages/             Page-specific styles
+├── backend/                     Express REST API
+│   ├── server.js                Entry — CORS, routes, error handler
+│   ├── config/db.js             Mongoose connection
+│   ├── routes/                  auth, users, doubts, replies, events, notifications
+│   ├── controllers/             Request handlers
+│   ├── middleware/auth.js       JWT verification
+│   ├── models/                  User, Doubt, Reply, Notification, ContributionEvent
+│   ├── scripts/verify-project.js
+│   └── .env.example             Copy to .env and fill in — never commit .env
 │
-└── js/
-    ├── store.js            LocalStorage abstraction (ONLY file that calls localStorage.*)
-    ├── models.js           User/Doubt factory functions + validation
-    ├── categories.js       Fixed category taxonomy — single source of truth
-    ├── bubbles.js          Canvas bubble physics + rendering
-    ├── cursor.js           Custom cursor + magnetic buttons
-    ├── loading.js          Animated loading screen
-    ├── transitions.js      Page transition system
-    ├── sphere-bg.js        Background 3D sphere animation
-    ├── algorithms/
-    │   ├── matchScore.js       Pure — doubt ↔ user skill fit
-    │   └── priorityScore.js    Pure — doubt ranking in the pool
-    ├── services/
-    │   └── leaderboardService.js
-    └── pages/
-        ├── landing.js
-        ├── signup.js
-        ├── login.js
-        ├── dashboard.js
-        ├── profile.js
-        └── leaderboard.js
+├── postman/                     Postman collection for API testing
+├── render.yaml                  Render deploy blueprint
+└── DEPLOYMENT_PHASE2.md         Local setup + Render deployment guide
 ```
 
 ---
 
 ## Getting Started
 
-No build step. No dependencies to install.
-
 ```bash
 git clone https://github.com/Manveet07/Studn-t.git
 cd Studn-t
 ```
 
-Then just open `index.html` in your browser.
+### 1. Configure MongoDB Atlas
 
-> **Note:** The project uses ES6 `<script type="module">`. Some browsers block module imports on `file://` URLs due to CORS. If bubbles don't load, serve it locally:
-> ```bash
-> python3 -m http.server 3000
-> # then open http://localhost:3000
-> ```
+1. Create a MongoDB Atlas cluster and database user.
+2. In Atlas Network Access, allow your current IP address (avoid `0.0.0.0/0` except for temporary testing).
+3. Copy the Node.js connection string.
+4. Create `backend/.env` by copying `backend/.env.example`.
+5. Replace `MONGODB_URI` with your connection string — URL-encode special characters in the database username/password if needed — and set a long random `JWT_SECRET`.
+6. Never commit `.env` or share your Atlas password publicly.
+
+### 2. Start the backend
+
+```bash
+cd backend
+npm install
+npm run dev        # or: npm start
+```
+
+The API runs at `http://localhost:5000`. Check `http://localhost:5000/api/health`.
+
+### 3. Start the frontend
+
+Serve `frontend/` with VS Code Live Server (or any static server) — for example `http://127.0.0.1:5500`. Don't open the HTML as `file://`; ES module imports are blocked there.
+
+The frontend's API base URL is `http://localhost:5000/api`, set in [`frontend/js/runtime-config.js`](frontend/js/runtime-config.js). Use Live Server on port `5500` unless you also change `FRONTEND_ORIGIN` in `backend/.env`.
+
+---
+
+## REST API Routes
+
+| Method | Endpoint | Purpose | Auth |
+|---|---|---|---|
+| GET | `/api/health` | Check API server | No |
+| POST | `/api/auth/register` | Create account | No |
+| POST | `/api/auth/login` | Log in | No |
+| GET | `/api/auth/me` | Current signed-in user | Yes |
+| GET | `/api/users/leaderboard` | Leaderboard data | No |
+| GET/PATCH | `/api/users/me` | Read/update own profile | Yes |
+| GET/POST | `/api/doubts` | List/create doubts | POST requires auth |
+| GET | `/api/doubts/:id` | Doubt and replies | No |
+| PATCH | `/api/doubts/:id` | Edit own doubt | Yes |
+| POST | `/api/doubts/:id/claim` | Claim an open doubt | Yes |
+| POST | `/api/doubts/:id/replies` | Reply to a doubt | Yes |
+| POST | `/api/doubts/:id/resolve` | Resolve own doubt | Yes |
+| POST | `/api/doubts/:id/rating` | Rate the helper | Yes |
+| POST | `/api/replies/:id/vote` | Like/dislike a reply | Yes |
+| POST | `/api/replies/:id/best-answer` | Mark best answer | Yes |
+| GET/POST | `/api/events/me`, `/api/events` | Contribution events | Yes |
+| GET/POST | `/api/notifications` | List/create notifications | Yes |
+| PATCH | `/api/notifications/:id/read`, `/api/notifications/read-all` | Mark read | Yes |
+
+---
+
+## Fetch Examples
+
+### GET — load doubts
+
+```js
+const response = await fetch('http://localhost:5000/api/doubts');
+const data = await response.json();
+
+if (!response.ok) throw new Error(data.message || 'Could not load doubts');
+console.log(data.doubts);
+```
+
+### POST — create a doubt
+
+```js
+const token = localStorage.getItem('studnt_token');
+
+const response = await fetch('http://localhost:5000/api/doubts', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    title: 'How does normalization work?',
+    description: 'Can someone explain 2NF and 3NF with an example?',
+    course: 'DBMS',
+    category: 'academic',
+    tags: ['DBMS'],
+    urgency: 'medium'
+  })
+});
+
+const data = await response.json();
+if (!response.ok) throw new Error(data.message || 'Could not create doubt');
+console.log(data.doubt);
+```
+
+[`frontend/js/api.js`](frontend/js/api.js) wraps `fetch`, attaches the saved JWT when available, and turns API errors into readable messages. Login, signup and the core doubt load/create/claim/resolve/reply actions are connected to the backend. Some legacy dashboard features (notification/reputation state and the older alternate dashboard pages) still have local-storage code and should be migrated endpoint-by-endpoint before production.
 
 ---
 
 ## Data Model
 
+The client shape below maps onto the Mongoose models in `backend/models/`.
+
 ```js
-// pd_users → array
+// users
 {
   id, name, username, university, year, branch,
   academicSkills,      // from categories.js taxonomy
@@ -196,7 +291,7 @@ Then just open `index.html` in your browser.
   createdAt
 }
 
-// pd_doubts → array
+// doubts
 {
   id, authorId, category, tags, courseContext,
   description, urgency,  // 0–100 slider
@@ -207,12 +302,23 @@ Then just open `index.html` in your browser.
 
 ---
 
+## Security Notes
+
+- Passwords are hashed on the server; the API never returns the password hash.
+- Keep the Atlas URI and JWT secret only in `backend/.env`.
+- Configure Atlas Network Access narrowly.
+- This is a development foundation. Before public deployment, add rate limiting, stronger input validation, production HTTPS, and review token storage/session strategy.
+
+---
+
 ## Roadmap
 
 | Phase | Status | Details |
 |---|---|---|
 | Phase 1 | ✅ Complete | Vanilla JS, LocalStorage, all core features |
-| Phase 2 | 🔜 Planned | Express.js + MongoDB + JWT auth — `store.js` swaps to `fetch()` calls, algorithms re-run server-side for validation |
+| Phase 2 | 🚧 In progress | Express + MongoDB Atlas + JWT — auth, doubts, replies, events and notifications served by the API; remaining dashboard reads still migrating off localStorage |
+
+See [DEPLOYMENT_PHASE2.md](DEPLOYMENT_PHASE2.md) for local setup, Render deployment, frontend `fetch()` configuration, MongoDB and Postman testing.
 
 ---
 
