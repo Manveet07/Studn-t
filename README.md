@@ -168,9 +168,7 @@ newRep = decayFactor × previousRep + (1 − decayFactor) × avgOfRecentRatings
 │   ├── scripts/verify-project.js
 │   └── .env.example             Copy to .env and fill in — never commit .env
 │
-├── postman/                     Postman collection for API testing
-├── render.yaml                  Render deploy blueprint
-└── DEPLOYMENT_PHASE2.md         Local setup + Render deployment guide
+└── render.yaml                  Render deploy blueprint
 ```
 
 ---
@@ -317,8 +315,6 @@ The client shape below maps onto the Mongoose models in `backend/models/`.
 |---|---|---|
 | Phase 1 | ✅ Complete | Vanilla JS, LocalStorage, all core features |
 | Phase 2 | 🚧 In progress | Express + MongoDB Atlas + JWT — auth, doubts, replies, events and notifications served by the API; remaining dashboard reads still migrating off localStorage |
-
-See [DEPLOYMENT_PHASE2.md](DEPLOYMENT_PHASE2.md) for local setup, Render deployment, frontend `fetch()` configuration, MongoDB and Postman testing.
 
 ---
 
